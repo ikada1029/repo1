@@ -125,12 +125,12 @@ weapon_motion:
 
 | 날짜 | 항목 | 내용 | 근거 파일 |
 |---|---|---|---|
-| | 애니메이션 파일 포맷(필드·단위·보간) | `[확인 필요]` | |
-| | 뼈 구조와 이름 규칙 | `[확인 필요]` | |
-| | 상태 머신 / 스크립트 유무와 역할 | `[확인 필요]` | |
-| | 소리·이펙트 이벤트 지정 방식 | `[확인 필요]` | |
-| | 근접 판정(서버/클라이언트, 타이밍 의존) | `[확인 필요]` | |
-| | 1인칭/3인칭 모션 분리 여부 | `[확인 필요]` | |
+| 2026-11-11 | 애니메이션 파일 포맷 | `format_version` + `animations{이름}`, 항목: `animation_length`, `loop`(true/hold_on_last_frame/생략=1회), `bones{뼈: 키프레임}`, `sound_effects`. 단위·보간 세부는 `[확인 필요]` | LR 1.21.1 `animations/melee/*.animation.json` (구조만 확인) |
+| 2026-11-11 | 뼈 구조와 이름 규칙 | `root`, `lefthand`, `righthand`, `gun_and_righthand`, `weapon`, `camera`, `constraint` 등. 모델(geo) 뼈와 일치해야 함 | 위와 동일 |
+| 2026-11-11 | 상태 머신 / 스크립트 | Lua 상태 머신(`display`의 `state_machine`), 입력(`INPUT_DRAW/PUT_AWAY/INSPECT`, `attack_left/right`) → `runAnimation`. 여러 무기 공유 가능. 좌공격은 카운터 홀짝으로 `melee_1/2` 선택 | LR `scripts/default_melee_state_machine.lua` |
+| 2026-11-11 | 소리·이펙트 이벤트 | 애니메이션 `sound_effects` 키프레임 + `display.sounds`(`attack_left/right`, `*_hit`, `crit`) | LR `display/melee/*.json` |
+| 2026-11-11 | 근접 판정 | **서버 판정**, `delay`·`cooldown`·`hitbox`(cone/obb)는 데이터(틱)로 애니메이션 길이와 독립 | LR `index/melee/*.json`, `CombatData.java` |
+| 2026-11-11 | 1인칭/3인칭 분리 | 3인칭은 `player_animator/melee/<id>.json`(야구방망이에만 존재), 1인칭은 `animations/melee` | LR 리소스 구조 |
 | | 에셋 라이선스 (TaCZ: CC BY-NC-ND 4.0 / LR 에셋: 확인 필요) | | |
 
 ## 8. 새 세션 시작 체크리스트 (Claude용)
