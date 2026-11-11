@@ -68,6 +68,8 @@ CLAIM_STARTER(player_uuid, archetype, request_id):
 
 ## 5. 연출·UI
 
+> 모델·UI·아이콘·소리 요구 목록은 `asset-requirements.md`에 정리했다.
+
 - 선택 화면: 6종의 아이콘, 역할 한 줄(`weapon-archetypes-spec.md` 6장 강·약점), 간단한 스탯 막대(공격 속도, 사거리, 범위), "체험하기" 버튼.
 - 선택 확정 시 짧은 연출(`fx-spec.md`의 `ENHANCE_SUCCESS`와 같은 계열 파티클·소리 재사용) + 안내(진화 경로, 상점 안내).
 - 접근성: 색에만 의존하지 않고 텍스트·아이콘으로 구분한다.
