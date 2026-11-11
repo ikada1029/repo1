@@ -1,0 +1,5 @@
+{
+  "_comment": "채택할 무기 선별. def_id를 approved에 넣으면 weapons_approved.json으로 따로 출력된다. rejected는 후보에서 제외 표시. 비어 있으면 전부 candidate.",
+  "approved": [],
+  "rejected": []
+}

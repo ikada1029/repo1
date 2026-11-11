@@ -1,0 +1,21 @@
+{
+  "_comment": "고유(네임드) 무기 후보. 진화 라인에 속하지 않으며 보스·이벤트·도감 보상 전용. 수치는 아키타입 템플릿에서 생성(DPS 균형 유지).",
+  "uniques": [
+    {"key": "new_dawn", "name": "새벽", "archetype": "one_hand_sword", "tier": 4, "overlay": "holy", "variant": "balanced", "acquire": "보스 보상(성광 계열)", "flavor": "동틀 녘의 첫 빛을 벼린 검"},
+    {"key": "starlight", "name": "별빛", "archetype": "one_hand_sword", "tier": 5, "overlay": "holy", "variant": "swift", "acquire": "도감 마일스톤(검 도감 완성)", "flavor": "수집가에게만 허락된 검"},
+    {"key": "fang_of_shadow", "name": "그림자 송곳니", "archetype": "dagger", "tier": 4, "overlay": "shadow", "variant": "swift", "acquire": "보스 보상(그림자 계열)", "flavor": "등 뒤에서 가장 빛나는 단검"},
+    {"key": "yaksha", "name": "야차", "archetype": "dual_blade", "tier": 5, "overlay": "shadow", "variant": "swift", "acquire": "최상급 보스 보상", "flavor": "밤을 가르는 한 쌍의 칼"},
+    {"key": "paecheon", "name": "파천", "archetype": "greatsword", "tier": 5, "overlay": "fire", "variant": "heavy", "acquire": "최상급 보스 보상", "flavor": "하늘을 쪼갠다는 대검"},
+    {"key": "blue_dragon_glaive", "name": "청룡언월", "archetype": "halberd", "tier": 5, "overlay": "thunder", "variant": "balanced", "acquire": "시즌 보상", "flavor": "푸른 용의 이름을 이은 장병기"},
+    {"key": "lightning_fall", "name": "낙뢰", "archetype": "spear", "tier": 4, "overlay": "thunder", "variant": "swift", "acquire": "보스 보상(번개 계열)", "flavor": "내리꽂히는 번개의 창"},
+    {"key": "primal_axe", "name": "태초의 도끼", "archetype": "axe", "tier": 5, "overlay": "fire", "variant": "heavy", "acquire": "최상급 보스 보상", "flavor": "첫 나무를 쓰러뜨린 도끼"},
+    {"key": "white_night", "name": "백야", "archetype": "rapier", "tier": 4, "overlay": "frost", "variant": "swift", "acquire": "보스 보상(서리 계열)", "flavor": "지지 않는 밤의 찌르기"},
+    {"key": "crimson_blade", "name": "적염", "archetype": "saber", "tier": 4, "overlay": "fire", "variant": "balanced", "acquire": "보스 보상(화염 계열)", "flavor": "붉게 달궈진 곡도"},
+    {"key": "sun_and_moon", "name": "일월", "archetype": "katana", "tier": 5, "overlay": "holy", "variant": "balanced", "acquire": "시즌 이벤트", "flavor": "해와 달을 한 칼에 담았다는 카타나"},
+    {"key": "thunder_hammer", "name": "천둥", "archetype": "hammer", "tier": 4, "overlay": "thunder", "variant": "heavy", "acquire": "보스 보상(번개 계열)", "flavor": "내려치면 하늘이 따라 운다"},
+    {"key": "vajra", "name": "금강", "archetype": "mace", "tier": 4, "overlay": "holy", "variant": "heavy", "acquire": "보스 보상(성광 계열)", "flavor": "깨지지 않는 철퇴"},
+    {"key": "twin_stars", "name": "쌍성", "archetype": "dual_dagger", "tier": 5, "overlay": "holy", "variant": "swift", "acquire": "이벤트(수집)", "flavor": "서로를 따라도는 두 별"},
+    {"key": "goblin_twins", "name": "도깨비 쌍부", "archetype": "dual_axe", "tier": 5, "overlay": "venom", "variant": "heavy", "acquire": "최상급 보스 보상", "flavor": "방망이 대신 얻은 도깨비의 도끼"},
+    {"key": "blood_moon", "name": "혈월", "archetype": "war_scythe", "tier": 5, "overlay": "shadow", "variant": "balanced", "acquire": "최상급 보스 보상", "flavor": "붉은 달 아래 휘두르는 대낫"}
+  ]
+}

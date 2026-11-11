@@ -1,0 +1,39 @@
+{
+  "_comment": "티어·테마 라인·진화 그래프. 진화는 T1→T5 4단계(분기는 T2→T3에서만 최대 2). 수치는 [제안].",
+  "tiers": {
+    "1": {"rarity": "일반", "multiplier": 1.0, "bind": "tradable"},
+    "2": {"rarity": "고급", "multiplier": 1.35, "bind": "tradable"},
+    "3": {"rarity": "희귀", "multiplier": 1.8, "bind": "tradable"},
+    "4": {"rarity": "영웅", "multiplier": 2.4, "bind": "bind_on_acquire"},
+    "5": {"rarity": "전설", "multiplier": 3.2, "bind": "bind_on_acquire"}
+  },
+  "variants": {
+    "balanced": {"cooldown_scale": 1.0, "label": "균형"},
+    "swift": {"cooldown_scale": 0.9, "label": "신속"},
+    "heavy": {"cooldown_scale": 1.15, "label": "중량"}
+  },
+  "themes": [
+    {"key": "iron", "name": "철", "tier": 1, "overlay": "none", "from": null, "variant": "balanced", "acquire": "상점(기본)"},
+    {"key": "bronze", "name": "청동", "tier": 1, "overlay": "none", "from": null, "variant": "heavy", "acquire": "상점(기본)"},
+    {"key": "steel", "name": "강철", "tier": 2, "overlay": "steel", "from": "iron", "variant": "balanced", "acquire": "상점(직업 레벨/도감 조건) 또는 철에서 진화"},
+    {"key": "silver", "name": "은", "tier": 2, "overlay": "steel", "from": "bronze", "variant": "swift", "acquire": "상점(직업 레벨/도감 조건) 또는 청동에서 진화"},
+    {"key": "flame", "name": "불꽃", "tier": 3, "overlay": "fire", "from": "steel", "variant": "heavy", "acquire": "강철에서 진화(분기 A)"},
+    {"key": "frost", "name": "서리", "tier": 3, "overlay": "frost", "from": "steel", "variant": "swift", "acquire": "강철에서 진화(분기 B)"},
+    {"key": "thunder", "name": "번개", "tier": 3, "overlay": "thunder", "from": "silver", "variant": "swift", "acquire": "은에서 진화(분기 A)"},
+    {"key": "holy", "name": "성광", "tier": 3, "overlay": "holy", "from": "silver", "variant": "balanced", "acquire": "은에서 진화(분기 B)"},
+    {"key": "venom", "name": "맹독", "tier": 3, "overlay": "venom", "from": null, "variant": "balanced", "acquire": "보스 재료 교환(독 계열 보스)"},
+    {"key": "shadow", "name": "그림자", "tier": 3, "overlay": "shadow", "from": null, "variant": "swift", "acquire": "보스 재료 교환(그림자 계열 보스)"},
+    {"key": "lava", "name": "용암", "tier": 4, "overlay": "fire", "from": "flame", "variant": "heavy", "acquire": "불꽃에서 진화(보스 재료)"},
+    {"key": "glacier", "name": "빙하", "tier": 4, "overlay": "frost", "from": "frost", "variant": "balanced", "acquire": "서리에서 진화(보스 재료)"},
+    {"key": "storm", "name": "폭풍", "tier": 4, "overlay": "thunder", "from": "thunder", "variant": "swift", "acquire": "번개에서 진화(보스 재료)"},
+    {"key": "heaven", "name": "천상", "tier": 4, "overlay": "holy", "from": "holy", "variant": "balanced", "acquire": "성광에서 진화(보스 재료)"},
+    {"key": "corrosion", "name": "부식", "tier": 4, "overlay": "venom", "from": "venom", "variant": "heavy", "acquire": "맹독에서 진화(보스 재료)"},
+    {"key": "dark", "name": "암흑", "tier": 4, "overlay": "shadow", "from": "shadow", "variant": "swift", "acquire": "그림자에서 진화(보스 재료)"},
+    {"key": "dragon", "name": "화룡", "tier": 5, "overlay": "fire", "from": "lava", "variant": "heavy", "acquire": "용암에서 진화(최상급 보스 재료)"},
+    {"key": "polar", "name": "극한", "tier": 5, "overlay": "frost", "from": "glacier", "variant": "balanced", "acquire": "빙하에서 진화(최상급 보스 재료)"},
+    {"key": "skybolt", "name": "천뢰", "tier": 5, "overlay": "thunder", "from": "storm", "variant": "swift", "acquire": "폭풍에서 진화(최상급 보스 재료)"},
+    {"key": "divine", "name": "신성", "tier": 5, "overlay": "holy", "from": "heaven", "variant": "balanced", "acquire": "천상에서 진화(최상급 보스 재료)"},
+    {"key": "plague", "name": "역병", "tier": 5, "overlay": "venom", "from": "corrosion", "variant": "heavy", "acquire": "부식에서 진화(최상급 보스 재료)"},
+    {"key": "abyss", "name": "심연", "tier": 5, "overlay": "shadow", "from": "dark", "variant": "swift", "acquire": "암흑에서 진화(최상급 보스 재료)"}
+  ]
+}

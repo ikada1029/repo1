@@ -1,0 +1,158 @@
+{
+  "_comment": "근접 아키타입 템플릿 (weapon-archetypes-spec.md). base_damage가 null이면 생성기가 target_dps에 맞춰 계산한다. 모든 수치는 [제안].",
+  "target_dps": 9.7,
+  "target_dps_aoe": 8.7,
+  "archetypes": [
+    {
+      "id": "one_hand_sword", "name_ko": "검", "item": "economycore:gear_sword", "hands": 1, "aoe": false, "base_damage": 6.0,
+      "left": [
+        {"factor": 1.0, "cooldown": 12, "delay": 0, "knockback": 0.05, "hitbox": {"type": "cone", "max_range": 3.5, "max_angle": 40}, "max_targets": 4},
+        {"factor": 0.8, "cooldown": 10, "delay": 0, "knockback": 0.05, "hitbox": {"type": "cone", "max_range": 3.5, "max_angle": 50}, "max_targets": 4}
+      ],
+      "right": {"factor": 1.5, "cooldown": 26, "delay": 2, "knockback": 0.10, "hitbox": {"type": "cone", "max_range": 3.5, "max_angle": 85}, "movement": {"delay": 0, "speed": 0.5}, "max_targets": 6},
+      "combo_reset": 30, "fx_base": "fx_sword_basic"
+    },
+    {
+      "id": "dagger", "name_ko": "단검", "item": "economycore:gear_sword", "hands": 1, "aoe": false, "base_damage": 3.0,
+      "extras": {"backstab_multiplier": 1.3},
+      "left": [
+        {"factor": 1.0, "cooldown": 6, "delay": 0, "knockback": 0.02, "hitbox": {"type": "cone", "max_range": 2.6, "max_angle": 35}, "max_targets": 2},
+        {"factor": 1.0, "cooldown": 6, "delay": 0, "knockback": 0.02, "hitbox": {"type": "cone", "max_range": 2.6, "max_angle": 35}, "max_targets": 2},
+        {"factor": 1.3, "cooldown": 8, "delay": 0, "knockback": 0.05, "hitbox": {"type": "cone", "max_range": 2.6, "max_angle": 45}, "max_targets": 2}
+      ],
+      "right": {"factor": 1.6, "cooldown": 22, "delay": 1, "knockback": 0.04, "hitbox": {"type": "cone", "max_range": 2.8, "max_angle": 30}, "movement": {"delay": 0, "speed": 0.7}, "max_targets": 1},
+      "combo_reset": 18, "fx_base": "fx_dagger_basic"
+    },
+    {
+      "id": "dual_blade", "name_ko": "쌍검", "item": "economycore:gear_sword", "hands": 2, "aoe": false, "base_damage": 4.0,
+      "left": [
+        {"hand": "right", "factor": 1.0, "cooldown": 7, "delay": 0, "knockback": 0.03, "hitbox": {"type": "arc", "max_range": 3.0, "max_angle": 35}, "max_targets": 3},
+        {"hand": "left", "factor": 1.0, "cooldown": 7, "delay": 0, "knockback": 0.03, "hitbox": {"type": "arc", "max_range": 3.0, "max_angle": 35}, "max_targets": 3},
+        {"hand": "right", "factor": 1.1, "cooldown": 8, "delay": 0, "knockback": 0.05, "hitbox": {"type": "arc", "max_range": 3.0, "max_angle": 45}, "max_targets": 3},
+        {"hand": "both", "factor": 1.5, "cooldown": 16, "delay": 1, "knockback": 0.12, "hitbox": {"type": "arc", "max_range": 3.2, "max_angle": 80}, "max_targets": 4}
+      ],
+      "right": {"hand": "both", "factor": 1.6, "cooldown": 24, "delay": 2, "knockback": 0.10, "hitbox": {"type": "arc", "max_range": 3.5, "max_angle": 110}, "movement": {"delay": 0, "speed": 0.6}, "max_targets": 6},
+      "combo_reset": 24, "fx_base": "fx_dual_basic"
+    },
+    {
+      "id": "greatsword", "name_ko": "대검", "item": "economycore:gear_sword", "hands": 1, "aoe": true, "base_damage": 10.0,
+      "left": [
+        {"factor": 1.0, "cooldown": 22, "delay": 3, "knockback": 0.20, "hitbox": {"type": "cone", "max_range": 4.0, "max_angle": 70}, "max_targets": 8},
+        {"factor": 1.2, "cooldown": 28, "delay": 4, "knockback": 0.25, "hitbox": {"type": "cone", "max_range": 4.0, "max_angle": 80}, "max_targets": 8}
+      ],
+      "right": {"factor": 2.4, "cooldown": 40, "delay": 8, "knockback": 0.45, "hitbox": {"type": "cone", "max_range": 4.5, "max_angle": 120}, "max_targets": 8},
+      "combo_reset": 40, "fx_base": "fx_greatsword_basic"
+    },
+    {
+      "id": "spear", "name_ko": "창", "item": "economycore:gear_polearm", "hands": 1, "aoe": false, "base_damage": 6.8,
+      "left": [
+        {"factor": 1.0, "cooldown": 14, "delay": 1, "knockback": 0.05, "hitbox": {"type": "obb", "max_range": 4.5, "half_width": 0.4, "half_height": 0.5}, "max_targets": 3},
+        {"factor": 1.0, "cooldown": 14, "delay": 1, "knockback": 0.05, "hitbox": {"type": "obb", "max_range": 4.5, "half_width": 0.4, "half_height": 0.5}, "max_targets": 3}
+      ],
+      "right": {"factor": 1.6, "cooldown": 30, "delay": 3, "knockback": 0.12, "hitbox": {"type": "obb", "max_range": 5.0, "half_width": 0.5, "half_height": 0.5}, "movement": {"delay": 0, "speed": 0.9}, "max_targets": 3},
+      "combo_reset": 28, "fx_base": "fx_spear_basic"
+    },
+    {
+      "id": "axe", "name_ko": "도끼", "item": "economycore:gear_axe", "hands": 1, "aoe": false, "base_damage": 8.8,
+      "extras": {"crit_multiplier": 1.8},
+      "left": [
+        {"factor": 1.0, "cooldown": 18, "delay": 2, "knockback": 0.10, "hitbox": {"type": "cone", "max_range": 3.2, "max_angle": 45}, "max_targets": 2},
+        {"factor": 1.1, "cooldown": 20, "delay": 2, "knockback": 0.12, "hitbox": {"type": "cone", "max_range": 3.2, "max_angle": 50}, "max_targets": 2}
+      ],
+      "right": {"factor": 1.9, "cooldown": 32, "delay": 4, "knockback": 0.30, "hitbox": {"type": "cone", "max_range": 3.4, "max_angle": 60}, "max_targets": 3},
+      "combo_reset": 32, "fx_base": "fx_axe_basic"
+    },
+    {
+      "id": "rapier", "name_ko": "레이피어", "item": "economycore:gear_sword", "hands": 1, "aoe": false, "base_damage": null,
+      "left": [
+        {"factor": 1.0, "cooldown": 8, "delay": 1, "knockback": 0.02, "hitbox": {"type": "obb", "max_range": 3.8, "half_width": 0.3, "half_height": 0.4}, "max_targets": 1},
+        {"factor": 1.0, "cooldown": 8, "delay": 1, "knockback": 0.02, "hitbox": {"type": "obb", "max_range": 3.8, "half_width": 0.3, "half_height": 0.4}, "max_targets": 1},
+        {"factor": 1.4, "cooldown": 12, "delay": 1, "knockback": 0.05, "hitbox": {"type": "obb", "max_range": 3.8, "half_width": 0.3, "half_height": 0.4}, "max_targets": 1}
+      ],
+      "right": {"factor": 1.7, "cooldown": 26, "delay": 2, "knockback": 0.06, "hitbox": {"type": "obb", "max_range": 5.0, "half_width": 0.35, "half_height": 0.4}, "movement": {"delay": 0, "speed": 0.8}, "max_targets": 1},
+      "combo_reset": 20, "fx_base": "fx_rapier_basic"
+    },
+    {
+      "id": "saber", "name_ko": "곡도", "item": "economycore:gear_sword", "hands": 1, "aoe": false, "base_damage": null,
+      "left": [
+        {"factor": 0.9, "cooldown": 9, "delay": 0, "knockback": 0.04, "hitbox": {"type": "cone", "max_range": 3.3, "max_angle": 45}, "max_targets": 3},
+        {"factor": 0.9, "cooldown": 9, "delay": 0, "knockback": 0.04, "hitbox": {"type": "cone", "max_range": 3.3, "max_angle": 45}, "max_targets": 3},
+        {"factor": 1.3, "cooldown": 14, "delay": 1, "knockback": 0.08, "hitbox": {"type": "cone", "max_range": 3.3, "max_angle": 60}, "max_targets": 3}
+      ],
+      "right": {"factor": 1.6, "cooldown": 28, "delay": 2, "knockback": 0.10, "hitbox": {"type": "cone", "max_range": 3.5, "max_angle": 90}, "movement": {"delay": 0, "speed": 0.6}, "max_targets": 4},
+      "combo_reset": 26, "fx_base": "fx_saber_basic"
+    },
+    {
+      "id": "katana", "name_ko": "카타나", "item": "economycore:gear_sword", "hands": 1, "aoe": false, "base_damage": null,
+      "left": [
+        {"factor": 1.0, "cooldown": 11, "delay": 1, "knockback": 0.04, "hitbox": {"type": "cone", "max_range": 3.6, "max_angle": 30}, "max_targets": 2},
+        {"factor": 1.0, "cooldown": 11, "delay": 1, "knockback": 0.04, "hitbox": {"type": "cone", "max_range": 3.6, "max_angle": 30}, "max_targets": 2},
+        {"factor": 1.5, "cooldown": 16, "delay": 2, "knockback": 0.08, "hitbox": {"type": "cone", "max_range": 3.8, "max_angle": 40}, "max_targets": 2}
+      ],
+      "right": {"factor": 2.0, "cooldown": 34, "delay": 5, "knockback": 0.12, "hitbox": {"type": "cone", "max_range": 4.2, "max_angle": 25}, "max_targets": 2},
+      "combo_reset": 28, "fx_base": "fx_katana_basic"
+    },
+    {
+      "id": "hammer", "name_ko": "해머", "item": "economycore:gear_axe", "hands": 1, "aoe": true, "base_damage": null,
+      "left": [
+        {"factor": 1.0, "cooldown": 26, "delay": 4, "knockback": 0.30, "hitbox": {"type": "cone", "max_range": 3.4, "max_angle": 90}, "max_targets": 6},
+        {"factor": 1.3, "cooldown": 34, "delay": 5, "knockback": 0.40, "hitbox": {"type": "cone", "max_range": 3.4, "max_angle": 100}, "max_targets": 6}
+      ],
+      "right": {"factor": 2.6, "cooldown": 48, "delay": 10, "knockback": 0.60, "hitbox": {"type": "cone", "max_range": 3.5, "max_angle": 180}, "max_targets": 8},
+      "combo_reset": 44, "fx_base": "fx_hammer_basic"
+    },
+    {
+      "id": "mace", "name_ko": "메이스", "item": "economycore:gear_axe", "hands": 1, "aoe": false, "base_damage": null,
+      "left": [
+        {"factor": 1.0, "cooldown": 15, "delay": 2, "knockback": 0.15, "hitbox": {"type": "cone", "max_range": 3.0, "max_angle": 50}, "max_targets": 2},
+        {"factor": 1.0, "cooldown": 15, "delay": 2, "knockback": 0.15, "hitbox": {"type": "cone", "max_range": 3.0, "max_angle": 50}, "max_targets": 2},
+        {"factor": 1.2, "cooldown": 18, "delay": 3, "knockback": 0.25, "hitbox": {"type": "cone", "max_range": 3.0, "max_angle": 60}, "max_targets": 2}
+      ],
+      "right": {"factor": 1.8, "cooldown": 30, "delay": 4, "knockback": 0.40, "hitbox": {"type": "cone", "max_range": 3.2, "max_angle": 70}, "max_targets": 3},
+      "combo_reset": 30, "fx_base": "fx_mace_basic"
+    },
+    {
+      "id": "halberd", "name_ko": "할버드", "item": "economycore:gear_polearm", "hands": 1, "aoe": true, "base_damage": null,
+      "left": [
+        {"factor": 1.0, "cooldown": 20, "delay": 3, "knockback": 0.10, "hitbox": {"type": "cone", "max_range": 4.8, "max_angle": 30}, "max_targets": 5},
+        {"factor": 1.0, "cooldown": 20, "delay": 3, "knockback": 0.10, "hitbox": {"type": "cone", "max_range": 4.8, "max_angle": 30}, "max_targets": 5}
+      ],
+      "right": {"factor": 1.7, "cooldown": 36, "delay": 5, "knockback": 0.20, "hitbox": {"type": "cone", "max_range": 4.5, "max_angle": 100}, "max_targets": 6},
+      "combo_reset": 34, "fx_base": "fx_halberd_basic"
+    },
+    {
+      "id": "dual_dagger", "name_ko": "쌍단검", "item": "economycore:gear_sword", "hands": 2, "aoe": false, "base_damage": null,
+      "extras": {"backstab_multiplier": 1.3},
+      "left": [
+        {"hand": "right", "factor": 0.8, "cooldown": 5, "delay": 0, "knockback": 0.01, "hitbox": {"type": "arc", "max_range": 2.4, "max_angle": 40}, "max_targets": 2},
+        {"hand": "left", "factor": 0.8, "cooldown": 5, "delay": 0, "knockback": 0.01, "hitbox": {"type": "arc", "max_range": 2.4, "max_angle": 40}, "max_targets": 2},
+        {"hand": "right", "factor": 0.8, "cooldown": 5, "delay": 0, "knockback": 0.01, "hitbox": {"type": "arc", "max_range": 2.4, "max_angle": 40}, "max_targets": 2},
+        {"hand": "left", "factor": 0.8, "cooldown": 5, "delay": 0, "knockback": 0.01, "hitbox": {"type": "arc", "max_range": 2.4, "max_angle": 40}, "max_targets": 2},
+        {"hand": "both", "factor": 1.4, "cooldown": 12, "delay": 1, "knockback": 0.08, "hitbox": {"type": "arc", "max_range": 2.6, "max_angle": 70}, "max_targets": 3}
+      ],
+      "right": {"hand": "both", "factor": 1.5, "cooldown": 22, "delay": 1, "knockback": 0.05, "hitbox": {"type": "arc", "max_range": 2.8, "max_angle": 90}, "movement": {"delay": 0, "speed": 0.8}, "max_targets": 3},
+      "combo_reset": 16, "fx_base": "fx_dual_dagger_basic"
+    },
+    {
+      "id": "dual_axe", "name_ko": "쌍도끼", "item": "economycore:gear_axe", "hands": 2, "aoe": false, "base_damage": null,
+      "extras": {"crit_multiplier": 1.7},
+      "left": [
+        {"hand": "right", "factor": 1.0, "cooldown": 16, "delay": 2, "knockback": 0.10, "hitbox": {"type": "arc", "max_range": 3.2, "max_angle": 45}, "max_targets": 2},
+        {"hand": "left", "factor": 1.0, "cooldown": 16, "delay": 2, "knockback": 0.10, "hitbox": {"type": "arc", "max_range": 3.2, "max_angle": 45}, "max_targets": 2},
+        {"hand": "both", "factor": 1.3, "cooldown": 22, "delay": 3, "knockback": 0.20, "hitbox": {"type": "arc", "max_range": 3.4, "max_angle": 70}, "max_targets": 3}
+      ],
+      "right": {"hand": "both", "factor": 2.0, "cooldown": 34, "delay": 4, "knockback": 0.30, "hitbox": {"type": "arc", "max_range": 3.4, "max_angle": 100}, "max_targets": 4},
+      "combo_reset": 30, "fx_base": "fx_dual_axe_basic"
+    },
+    {
+      "id": "war_scythe", "name_ko": "대낫", "item": "economycore:gear_polearm", "hands": 1, "aoe": true, "base_damage": null,
+      "left": [
+        {"factor": 1.0, "cooldown": 18, "delay": 3, "knockback": 0.08, "hitbox": {"type": "arc", "max_range": 4.2, "max_angle": 120}, "max_targets": 6},
+        {"factor": 1.1, "cooldown": 20, "delay": 3, "knockback": 0.08, "hitbox": {"type": "arc", "max_range": 4.2, "max_angle": 120}, "max_targets": 6},
+        {"factor": 1.4, "cooldown": 28, "delay": 5, "knockback": 0.15, "hitbox": {"type": "arc", "max_range": 4.4, "max_angle": 160}, "max_targets": 8}
+      ],
+      "right": {"factor": 2.0, "cooldown": 38, "delay": 6, "knockback": 0.20, "hitbox": {"type": "arc", "max_range": 4.5, "max_angle": 200}, "max_targets": 8},
+      "combo_reset": 36, "fx_base": "fx_war_scythe_basic"
+    }
+  ]
+}
