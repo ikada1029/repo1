@@ -35,6 +35,7 @@ GearActionEvent {
   actor: uuid, serial, def_id, tier, enhance_level, evolution_id,
   action: SWING | HIT | CRIT | KILL | DRAW | PUT_AWAY | HOLD_TICK | BLOCK ...,
   combo_index: int,
+  hand: LEFT | RIGHT | BOTH | NONE,     // 쌍검 등 양손 무기의 공격 손(combat-spec.md 12장), 단일 무기는 NONE
   origin: Vec3, direction: Vec3,        // 서버 값(플레이어 눈 위치·시선)
   targets: [ {entity_id, pos, hit_point} ]   // HIT/KILL/CRIT일 때
 }
@@ -68,6 +69,7 @@ fx_set:
           angle_end_deg: 60
           count: 18
           plane: "horizontal|diagonal_down"
+          hand_offset: 0.4           # 쌍검: GearActionEvent.hand에 따라 눈 위치 기준 좌/우 ±offset에서 시작, LEFT면 호 반전, BOTH면 양쪽 동시
         - type: sound
           sound: "economycore:fx.flame_swing"
           volume: 1.0

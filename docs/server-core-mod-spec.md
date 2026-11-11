@@ -29,6 +29,7 @@
 | `/give`·크리에이티브 유입 (C6, X3) | 명령어·게임모드 통제 | `guard.command` |
 | 아이템·가구 복제 (X6) | 발급 장부 + 시리얼 부여 | `guard.identity` |
 | 근접 공격의 클라이언트 신뢰(대상 변조) | 서버 재검증 | `guard.melee` |
+| 쌍검(양손 무기) 오프핸드 점유 우회 | 인벤토리·핫바·F키 이동 서버 검증 | `combat`(`combat-spec.md` 12.3) |
 | 조리 판정·재료 1회 소비 (5.3장) | 조리 작업(CookJob) 트랜잭션 + 쿨타임 | `cooking` |
 | 모드 버전·설정 불일치 (C8, C9) | 기동 시 locklist 검증 | `platform.lockcheck` |
 

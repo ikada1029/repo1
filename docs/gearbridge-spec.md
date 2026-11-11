@@ -148,7 +148,7 @@ ENHANCE(player_uuid, serial, request_id):
 
 | 테이블 | 주요 필드 | 무결성 |
 |---|---|---|
-| `gear_defs` | `def_id, item_id, category, tier, base_stats_json, bind_policy, active` | `(item_id, def_id)` 유니크 |
+| `gear_defs` | `def_id, item_id, category, archetype, hands, tier, base_stats_json, bind_policy, active` | `(item_id, def_id)` 유니크. `hands: 2`(쌍검, `combat-spec.md` 12장)도 **시리얼 1개 = 1세트**로 취급 |
 | `gear_instances` | `serial PK, def_id, owner_uuid, enhance_level, evolution_id, display_id, status, version` | 낙관적 락 |
 | `gear_history` | `id, serial, request_id UNIQUE, old_state, new_state, rates_version, created_at` | 강화·진화 감사 |
 | `enhance_rates` | `tier, level, success, keep, destroy, coin_cost, stone_cost, rates_version` | 합 100% 검증 |
