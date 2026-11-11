@@ -9,7 +9,9 @@
 - 모든 수치는 [제안]이며 실측으로 교체한다.
 """
 import argparse
+import datetime
 import json
+import random
 import subprocess
 import sys
 from pathlib import Path
@@ -139,12 +141,338 @@ def load_archetypes():
     return out, cfg["target_dps"], cfg["target_dps_aoe"]
 
 
+# ---------- 난수 시뮬레이션 ----------
+def _stats(xs):
+    xs = sorted(xs)
+    n = len(xs)
+
+    def q(p):
+        return xs[min(n - 1, int(p * (n - 1)))]
+    return {"mean": sum(xs) / n, "p50": q(0.50), "p90": q(0.90), "p95": q(0.95), "p99": q(0.99), "max": xs[-1]}
+
+
+def run_mc(v, n_enh=50000, n_first=100000, n_spec=20000, n_full=2000, seed=20261111):
+    """v: Enhance/Gacha 입력(재계산된 값). 모든 난수는 시드 고정."""
+    rng = random.Random(seed)
+    S_, K_, D_, C_ = v["s"], v["k"], v["d"], v["c"]
+    start = v["start_price"]
+    levels = sorted(set([5, 8, 10, 12, 15, int(v["target_lv"])]))
+    maxl = max(levels)
+    acc = {L: {"cost": [], "destroy": [], "attempts": []} for L in levels}
+    for _ in range(n_enh):
+        cost = start
+        n = 0
+        destroys = 0
+        attempts = 0
+        done = set()
+        while n < maxl:
+            attempts += 1
+            cost += C_[n]
+            u = rng.random()
+            if u < S_[n]:
+                n += 1
+                if n in acc and n not in done:
+                    done.add(n)
+                    acc[n]["cost"].append(cost)
+                    acc[n]["destroy"].append(destroys)
+                    acc[n]["attempts"].append(attempts)
+            elif u < S_[n] + K_[n]:
+                pass
+            else:
+                destroys += 1
+                cost += start
+                n = 0
+    enh = {}
+    for L in levels:
+        st = _stats(acc[L]["cost"])
+        dl = acc[L]["destroy"]
+        st["destroy_prob"] = sum(1 for x in dl if x > 0) / len(dl)
+        st["destroy_mean"] = sum(dl) / len(dl)
+        st["attempts_mean"] = sum(acc[L]["attempts"]) / len(acc[L]["attempts"])
+        enh[L] = st
+    tl = int(v["target_lv"])
+    tc = sorted(acc[tl]["cost"])
+    pts = [0.01, 0.05] + [x / 100 for x in range(10, 100, 10)] + [0.95, 0.99]
+    cdf = {"p": pts, "cost": [tc[min(len(tc) - 1, int(p * (len(tc) - 1)))] for p in pts]}
+    mean_t = enh[tl]["mean"]
+    edges = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+    counts = [0] * (len(edges) + 1)
+    for x in tc:
+        r_ = x / mean_t
+        i = 0
+        while i < len(edges) and r_ >= edges[i]:
+            i += 1
+        counts[i] += 1
+    hist_enh = {"edges": edges, "counts": counts}
+
+    pc, pr, pe, pl = v["g_common"], v["g_rare"], v["g_epic"], v["g_legend"]
+    pity = int(v["pity"])
+    nl = int(v["n_legend"])
+    forced_leg = pl / (pe + pl)
+
+    def draw(counter):
+        r_ = rng.random()
+        if counter >= pity - 1:
+            return 3 if r_ < forced_leg else 2
+        if r_ < pc:
+            return 0
+        if r_ < pc + pr:
+            return 1
+        if r_ < pc + pr + pe:
+            return 2
+        return 3
+
+    first_epic, first_leg = [], []
+    for _ in range(n_first):
+        counter = 0
+        pulls = 0
+        fe = None
+        while True:
+            pulls += 1
+            t = draw(counter)
+            if t >= 2:
+                counter = 0
+                if fe is None:
+                    fe = pulls
+                if t == 3:
+                    break
+            else:
+                counter += 1
+        first_epic.append(fe)
+        first_leg.append(pulls)
+    spec = []
+    for _ in range(n_spec):
+        counter = 0
+        pulls = 0
+        while True:
+            pulls += 1
+            t = draw(counter)
+            if t >= 2:
+                counter = 0
+            if t == 3 and rng.random() < 1.0 / nl:
+                break
+            if t < 2:
+                counter += 1
+        spec.append(pulls)
+    pools = [int(v["n_common"]), int(v["n_rare"]), int(v["n_epic"]), nl]
+    total_items = sum(pools)
+    full = []
+    for _ in range(n_full):
+        owned = [set() for _ in pools]
+        have = 0
+        counter = 0
+        pulls = 0
+        while have < total_items:
+            pulls += 1
+            t = draw(counter)
+            if t >= 2:
+                counter = 0
+            else:
+                counter += 1
+            it = rng.randrange(pools[t])
+            if it not in owned[t]:
+                owned[t].add(it)
+                have += 1
+        full.append(pulls)
+    lb = [25, 50, 100, 150, 200, 300, 400, 600]
+    lc = [0] * (len(lb) + 1)
+    for x in first_leg:
+        i = 0
+        while i < len(lb) and x > lb[i]:
+            i += 1
+        lc[i] += 1
+    return {
+        "seed": seed, "date": datetime.date.today().isoformat(),
+        "n_enh": n_enh, "n_first": n_first, "n_spec": n_spec, "n_full": n_full,
+        "levels": levels, "enh": enh, "target_level": tl, "cdf": cdf, "hist_enh": hist_enh,
+        "g_epic": _stats(first_epic), "g_leg": _stats(first_leg), "g_spec": _stats(spec), "g_full": _stats(full),
+        "hist_leg": {"edges": lb, "counts": lc},
+    }
+
+
+def build_mc_sheet(ws, P, mc):
+    put(ws, "A1", "MonteCarlo — 난수 시뮬레이션 결과 (강화 비용 분위·뽑기 분포)", "title")
+    if mc is None:
+        put(ws, "A3", "(미생성) build_g3.py 실행 시 채워진다.", "note")
+        P["mc_p90_ratio"] = "MonteCarlo!$A$3"
+        P["mc_leg_ratio"] = "MonteCarlo!$A$3"
+        return
+    put(ws, "A2", f"스크립트(build_g3.py)가 기본 시나리오 입력으로 돌린 **정적 결과**다. 시드 {mc['seed']}(고정), 생성일 {mc['date']}, 강화 {mc['n_enh']:,}회·뽑기 {mc['n_first']:,}/{mc['n_spec']:,}/{mc['n_full']:,}회 시행. 파란 칸이 아닌 값은 입력이 바뀌면 스크립트로 다시 생성해야 한다.", "note")
+    put(ws, "A3", "강화 알고리즘: 장비 구매 → 단계마다 비용 지불 후 성공/유지/파괴 판정 → 파괴 시 장비 재구매 + 0단계부터 재시작 (Enhance 시트의 분석식과 같은 모델)", "note")
+    # --- 1. 강화 ---
+    section(ws, 5, "1. 강화 — 목표 단계별 총비용 분포 (장비 구매가 포함)", 14)
+    hdr_row(ws, 6, ["목표 단계(+)", "분석 기대 비용(수식)", "MC 평균", "MC÷분석", "P50", "P90", "P95", "P99", "P90÷평균", "파괴 1회 이상 확률", "평균 파괴 횟수", "평균 시도 수", "P50 소요 일수", "P90 소요 일수"])
+    first = 7
+    target_row = None
+    for i, L in enumerate(mc["levels"]):
+        r = first + i
+        st = mc["enh"][L]
+        put(ws, f"A{r}", L, "label", "0")
+        put(ws, f"B{r}", f"={P['start_price']}+INDEX(Enhance!$N$6:$N$25,A{r})", "f", NUM)
+        put(ws, f"C{r}", st["mean"], "label", NUM)
+        put(ws, f"D{r}", f"=C{r}/B{r}", "f", RATIO)
+        put(ws, f"E{r}", st["p50"], "label", NUM)
+        put(ws, f"F{r}", st["p90"], "label", NUM)
+        put(ws, f"G{r}", st["p95"], "label", NUM)
+        put(ws, f"H{r}", st["p99"], "label", NUM)
+        put(ws, f"I{r}", f"=F{r}/C{r}", "f", NUM2)
+        put(ws, f"J{r}", st["destroy_prob"], "label", PCT)
+        put(ws, f"K{r}", st["destroy_mean"], "label", NUM2)
+        put(ws, f"L{r}", st["attempts_mean"], "label", NUM1)
+        put(ws, f"M{r}", f"=E{r}/{P['enh_budget']}", "f", NUM1)
+        put(ws, f"N{r}", f"=F{r}/{P['enh_budget']}", "f", NUM1)
+        if L == mc["target_level"]:
+            target_row = r
+    last = first + len(mc["levels"]) - 1
+    put(ws, f"A{last+1}", "※ 소요 일수 = 총비용 ÷ 중견 유저 강화 일 예산(Enhance 시트). 목표 단계 행은 Params의 목표 강화 단계와 같은 행이다.", "note")
+    P["mc_p90_ratio"] = f"MonteCarlo!$I${target_row}"
+    # --- 2. 예산 도달 확률 ---
+    r0 = last + 3
+    section(ws, r0, "2. 목표 단계 도달 확률 — 일수별 예산 (목표 단계 총비용 분포를 보간)", 6)
+    hdr_row(ws, r0 + 1, ["경과 일수", "누적 예산(Coin)", "도달 확률"])
+    cdf_p0 = r0 + 12
+    cdf_c0 = cdf_p0
+    put(ws, f"F{r0+1}", "분위(p)", "hdr")
+    put(ws, f"G{r0+1}", "총비용(Coin)", "hdr")
+    npts = len(mc["cdf"]["p"])
+    for i in range(npts):
+        put(ws, f"F{r0+2+i}", mc["cdf"]["p"][i], "label", PCT)
+        put(ws, f"G{r0+2+i}", mc["cdf"]["cost"][i], "label", NUM)
+    cp_first, cp_last = r0 + 2, r0 + 1 + npts
+    for j, dday in enumerate([7, 14, 21, 30, 45]):
+        r = r0 + 2 + j
+        put(ws, f"A{r}", dday, "in", "0")
+        put(ws, f"B{r}", f"=A{r}*{P['enh_budget']}", "f", NUM)
+        idx = f"MATCH(B{r},$G${cp_first}:$G${cp_last},1)"
+        pr_ = f"$F${cp_first}:$F${cp_last}"
+        cr_ = f"$G${cp_first}:$G${cp_last}"
+        put(ws, f"C{r}", f"=IF(B{r}<$G${cp_first},0,IF(B{r}>=$G${cp_last},1,INDEX({pr_},{idx})+(B{r}-INDEX({cr_},{idx}))/(INDEX({cr_},{idx}+1)-INDEX({cr_},{idx}))*(INDEX({pr_},{idx}+1)-INDEX({pr_},{idx}))))", "f", PCT)
+    put(ws, f"A{r0+8}", "※ 분위 표(F:G)는 시뮬레이션의 정적 값이고, 예산은 Enhance 시트의 일 예산을 따라 바뀐다(분위 사이 선형 보간, 1% 미만·99% 초과는 0/100%로 처리).", "note")
+    # --- 3. 가구 뽑기 ---
+    g0 = max(cp_last, r0 + 8) + 3
+    section(ws, g0, "3. 가구 뽑기 — 필요 뽑기 수 분포 (천장 반영, 1회 가격 기준 비용)", 12)
+    hdr_row(ws, g0 + 1, ["항목", "분석 기대(수식)", "MC 평균", "MC÷분석", "P50", "P90", "P95", "P99", "평균 비용(Coin)", "P90 비용(Coin)", "P90 비용÷중견 월소득", "비고"])
+    rows = [
+        ("영웅 이상 첫 획득", "=Gacha!D14", mc["g_epic"], "천장 N회 보장"),
+        ("전설 첫 획득", "=Gacha!D17", mc["g_leg"], "분석식은 천장 시 영웅+ 중 전설 비율 적용"),
+        ("특정 전설 1종 획득", f"=Gacha!D17*{P['n_legend']}", mc["g_spec"], "풀의 특정 1종, 조각 교환 제외"),
+        ("전체 컬렉션 완성", "=Gacha!D24", mc["g_full"], "분석식은 최대 티어 근사(보수적)"),
+    ]
+    for i, (nm, ana, st, note) in enumerate(rows):
+        r = g0 + 2 + i
+        put(ws, f"A{r}", nm, "label")
+        put(ws, f"B{r}", ana, "f", NUM1)
+        put(ws, f"C{r}", st["mean"], "label", NUM1)
+        put(ws, f"D{r}", f"=C{r}/B{r}", "f", RATIO)
+        put(ws, f"E{r}", st["p50"], "label", NUM)
+        put(ws, f"F{r}", st["p90"], "label", NUM)
+        put(ws, f"G{r}", st["p95"], "label", NUM)
+        put(ws, f"H{r}", st["p99"], "label", NUM)
+        put(ws, f"I{r}", f"=C{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"J{r}", f"=F{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"K{r}", f"=J{r}/Gacha!$D$19", "f", PCT)
+        put(ws, f"L{r}", note, "note")
+    P["mc_leg_ratio"] = f"MonteCarlo!$K${g0+3}"
+    # --- 4. 히스토그램 ---
+    h0 = g0 + 8
+    section(ws, h0, "4. 분포(히스토그램)", 8)
+    put(ws, f"A{h0+1}", "강화 총비용 ÷ 평균 (목표 단계)", "bold")
+    he = mc["hist_enh"]
+    labels = ["< 0.5×"] + [f"{he['edges'][i]}× ~ {he['edges'][i+1]}×" for i in range(len(he["edges"]) - 1)] + [f"≥ {he['edges'][-1]}×"]
+    hdr_row(ws, h0 + 2, ["구간", "시행 수", "비율", "막대"])
+    total = sum(he["counts"])
+    c0 = h0 + 3
+    for i, lab in enumerate(labels):
+        r = c0 + i
+        put(ws, f"A{r}", lab, "label")
+        put(ws, f"B{r}", he["counts"][i], "label", NUM)
+        put(ws, f"C{r}", f"=B{r}/SUM($B${c0}:$B${c0+len(labels)-1})", "f", PCT)
+        put(ws, f"D{r}", f'=REPT("█",ROUND(C{r}*60,0))', "f")
+    g1 = c0 + len(labels) + 1
+    put(ws, f"A{g1}", "전설 첫 획득까지 뽑기 수", "bold")
+    hl = mc["hist_leg"]
+    labs = [f"≤ {hl['edges'][0]}"] + [f"{hl['edges'][i]+1} ~ {hl['edges'][i+1]}" for i in range(len(hl["edges"]) - 1)] + [f"> {hl['edges'][-1]}"]
+    hdr_row(ws, g1 + 1, ["구간(회)", "시행 수", "비율", "막대"])
+    c1 = g1 + 2
+    for i, lab in enumerate(labs):
+        r = c1 + i
+        put(ws, f"A{r}", lab, "label")
+        put(ws, f"B{r}", hl["counts"][i], "label", NUM)
+        put(ws, f"C{r}", f"=B{r}/SUM($B${c1}:$B${c1+len(labs)-1})", "f", PCT)
+        put(ws, f"D{r}", f'=REPT("█",ROUND(C{r}*60,0))', "f")
+    put(ws, f"A{c1+len(labs)+1}", "※ 전설 확률 1%(천장 영웅+ 50회)에서 '평균 약 100회'여도 분포는 길게 늘어진다 — 평균만으로 부담을 판단하지 않는다.", "note")
+    widths(ws, {"A": 26, "B": 18, "C": 14, "D": 12, "E": 12, "F": 14, "G": 14, "H": 14, "I": 14, "J": 16, "K": 18, "L": 36, "M": 14, "N": 14})
+    ws.freeze_panes = "A5"
+
+
+def build_live_sheet(ws, P):
+    put(ws, "A1", "Live_Sim — 시트 안 RAND() 체험 시뮬레이션 (재계산할 때마다 값이 바뀐다)", "title")
+    put(ws, "A2", "F9(재계산)로 다시 굴린다. 이 시트의 값은 다른 시트가 참조하지 않는다. 대량 분포는 MonteCarlo 시트(정적, 시드 고정)를 본다.", "note")
+    # ---- 강화 한 번의 여정 ----
+    put(ws, "A4", "목표 단계(+)", "label")
+    put(ws, "B4", f"={P['target_lv']}", "link", "0")
+    put(ws, "A5", "도달까지 시도 수", "bold")
+    put(ws, "A6", "총비용(장비 구매 포함)", "bold")
+    put(ws, "A7", "파괴 횟수", "bold")
+    hdr_row(ws, 8, ["#", "현재 단계", "성공 확률", "유지 확률", "파괴 확률", "난수", "결과", "다음 단계", "이번 비용", "누적 비용", "누적 파괴"])
+    N = 150
+    first, last = 9, 8 + N
+    for i in range(N):
+        r = first + i
+        put(ws, f"A{r}", i + 1, "label", "0")
+        put(ws, f"B{r}", 0 if i == 0 else f"=H{r-1}", "in" if i == 0 else "f", "0")
+        put(ws, f"C{r}", f"=IF(B{r}>=$B$4,0,INDEX(Enhance!$E$6:$E$25,MIN(B{r}+1,20)))", "f", PCT)
+        put(ws, f"D{r}", f"=IF(B{r}>=$B$4,0,INDEX(Enhance!$F$6:$F$25,MIN(B{r}+1,20)))", "f", PCT)
+        put(ws, f"E{r}", f"=IF(B{r}>=$B$4,0,INDEX(Enhance!$G$6:$G$25,MIN(B{r}+1,20)))", "f", PCT)
+        put(ws, f"F{r}", "=RAND()", "f", "0.000")
+        put(ws, f"G{r}", f'=IF(B{r}>=$B$4,"도달",IF(F{r}<C{r},"성공",IF(F{r}<C{r}+D{r},"유지","파괴")))', "f")
+        put(ws, f"H{r}", f'=IF(G{r}="성공",B{r}+1,IF(G{r}="파괴",0,B{r}))', "f", "0")
+        put(ws, f"I{r}", f'=IF(B{r}>=$B$4,0,INDEX(Enhance!$K$6:$K$25,MIN(B{r}+1,20))+IF(G{r}="파괴",{P["start_price"]},0))', "f", NUM)
+        prev = f"J{r-1}+" if i > 0 else f"{P['start_price']}+"
+        put(ws, f"J{r}", f"={prev}I{r}", "f", NUM)
+        put(ws, f"K{r}", (f'=K{r-1}+' if i > 0 else "=") + f'IF(G{r}="파괴",1,0)', "f", "0")
+    put(ws, "B5", f'=IFERROR(MATCH("도달",G{first}:G{last},0)-1,"미도달({N}회 초과)")', "f", "0")
+    put(ws, "B6", f'=IF(ISNUMBER(B5),INDEX(J{first}:J{last},B5),MAX(J{first}:J{last}))', "f", NUM)
+    put(ws, "B7", f'=IF(ISNUMBER(B5),INDEX(K{first}:K{last},B5),MAX(K{first}:K{last}))', "f", "0")
+    put(ws, "C5", "← 분석 기대 시도 수는 MonteCarlo의 '평균 시도 수'", "note")
+    put(ws, "C6", f"← 분석 기대 비용 {'(Enhance 시트 목표 단계 요약)'}", "note")
+    # ---- 가구 뽑기 300회 ----
+    put(ws, "N4", "뽑기 횟수", "label")
+    put(ws, "O4", 300, "label", "0")
+    hdr_row(ws, 8, ["#", "천장 카운터(이전)", "난수", "천장 발동", "결과", "다음 카운터"], start_col=14)
+    G = 300
+    g_first, g_last = 9, 8 + G
+    for i in range(G):
+        r = g_first + i
+        put(ws, f"N{r}", i + 1, "label", "0")
+        put(ws, f"O{r}", 0 if i == 0 else f"=S{r-1}", "in" if i == 0 else "f", "0")
+        put(ws, f"P{r}", "=RAND()", "f", "0.000")
+        put(ws, f"Q{r}", f'=IF(O{r}>={P["pity"]}-1,"Y","N")', "f")
+        put(ws, f"R{r}", f'=IF(Q{r}="Y",IF(P{r}<{P["g_legend"]}/({P["g_epic"]}+{P["g_legend"]}),"전설","영웅"),IF(P{r}<{P["g_common"]},"일반",IF(P{r}<{P["g_common"]}+{P["g_rare"]},"희귀",IF(P{r}<{P["g_common"]}+{P["g_rare"]}+{P["g_epic"]},"영웅","전설"))))', "f")
+        put(ws, f"S{r}", f'=IF(OR(R{r}="영웅",R{r}="전설"),0,O{r}+1)', "f", "0")
+    hdr_row(ws, 4, ["티어", "횟수", "비율", "공개 확률"], start_col=17)
+    for i, (nm, key) in enumerate((("일반", "g_common"), ("희귀", "g_rare"), ("영웅", "g_epic"), ("전설", "g_legend"))):
+        r = 5 + i
+        put(ws, f"Q{r}", nm, "label")
+        put(ws, f"R{r}", f'=COUNTIF($R${g_first}:$R${g_last},Q{r})', "f", "0")
+        put(ws, f"S{r}", f"=R{r}/$O$4", "f", PCT)
+        put(ws, f"T{r}", f"={P[key]}", "link", PCT)
+    put(ws, "N5", "전설 첫 획득", "bold")
+    put(ws, "O5", f'=IFERROR(MATCH("전설",R{g_first}:R{g_last},0),"미획득")', "f", "0")
+    put(ws, "N6", "천장 발동 횟수", "bold")
+    put(ws, "O6", f'=COUNTIF(Q{g_first}:Q{g_last},"Y")', "f", "0")
+    put(ws, "N7", "300회 비용(Coin)", "bold")
+    put(ws, "O7", f"=O4*{P['e_g1']}", "f", NUM)
+    widths(ws, {"A": 22, "B": 12, "C": 12, "D": 12, "E": 12, "F": 10, "G": 8, "H": 10, "I": 12, "J": 14, "K": 10, "L": 3, "M": 3, "N": 16, "O": 14, "P": 10, "Q": 12, "R": 10, "S": 12, "T": 12})
+    ws.freeze_panes = "A9"
+
+
 # ---------- 빌드 ----------
-def build(scenario_index=1):
+def build(scenario_index=1, mc=None):
     wb = Workbook()
     ws_leg = wb.active
     ws_leg.title = "Legend"
-    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "Dashboard"]
+    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Live_Sim", "Dashboard"]
     S = {n: wb.create_sheet(n) for n in names}
     S["Legend"] = ws_leg
     P = {}  # 파라미터 키 -> 절대 참조 문자열
@@ -652,6 +980,8 @@ def build(scenario_index=1):
     P["enh_days"] = f"Enhance!$D${r0+6}"
     P["enh_dev"] = f"Enhance!$D${r0+7}"
     P["enh_cost1"] = f"Enhance!$D${r0+8}"
+    P["enh_budget"] = f"Enhance!$D${r0+5}"
+    P["enh_total_cost_row"] = r0 + 3
     widths(ws, {"A": 46, "B": 11, "C": 12, **{CL(k): 13 for k in range(4, 17)}})
     ws.freeze_panes = "C6"
 
@@ -799,6 +1129,10 @@ def build(scenario_index=1):
     widths(ws, {"A": 6, **{CL(k): 15 for k in range(2, 15)}})
     ws.freeze_panes = "B4"
 
+    # ===== MonteCarlo =====
+    build_mc_sheet(S["MonteCarlo"], P, mc)
+    build_live_sheet(S["Live_Sim"], P)
+
     # ===== Dashboard =====
     ws = S["Dashboard"]
     put(ws, "A1", "Dashboard — 합격 기준 판정 요약", "title")
@@ -822,6 +1156,8 @@ def build(scenario_index=1):
         ("아키타입 DPS 비율 최소", f'="1 ±"&TEXT({P["dps_tol"]},"0%")', f"={P['dps_min']}", f'=IF(ABS(C{{r}}-1)<={P["dps_tol"]},"OK","검토")', RATIO, "Weapons_DPS"),
         ("특수 효과 DPS 비중 최대(티어)", f'="<= "&TEXT({P["effect_cap"]},"0%")', f"={P['effect_max']}", f'=IF(C{{r}}<={P["effect_cap"]},"OK","검토")', PCT, "Weapons_DPS 티어 표"),
         ("유저 비율 합계", '="= 100%"', f"={P['mix_sum']}", '=IF(ABS(C{r}-1)<0.0001,"OK","검토")', PCT, "Params 입력 검증"),
+        ("강화 비용 P90 / 평균(목표 단계, 난수 시뮬)", '="<= 2.0배"', f'=IF(Scenarios!$B$2=1,{P["mc_p90_ratio"]},"n/a")', '=IF(ISNUMBER(C{r}),IF(C{r}<=2,"OK","검토"),"n/a")', NUM2, "MonteCarlo(정적, 기본 시나리오만)"),
+        ("전설 1개 P90 비용 / 중견 월소득(난수 시뮬)", f'="<= "&TEXT({P["legend_max"]}*2,"0%")', f'=IF(Scenarios!$B$2=1,{P["mc_leg_ratio"]},"n/a")', f'=IF(ISNUMBER(C{{r}}),IF(C{{r}}<={P["legend_max"]}*2,"OK","검토"),"n/a")', PCT, "MonteCarlo(정적, 기본 시나리오만). 기준은 평균 기준 상한의 2배"),
     ]
     D_FIRST = 5
     for i, (lab, tgt, cur, stat, fmt, desc) in enumerate(rows):
@@ -834,8 +1170,8 @@ def build(scenario_index=1):
     D_LAST = D_FIRST + len(rows) - 1
     status_format(ws, f"D{D_FIRST}:D{D_LAST}")
     put(ws, f"A{D_LAST+2}", "판정 요약", "bold")
-    put(ws, f"C{D_LAST+2}", f'=COUNTIF(D{D_FIRST}:D{D_LAST},"OK")&" / "&COUNTA(D{D_FIRST}:D{D_LAST})&" 통과"', "f")
-    put(ws, f"A{D_LAST+4}", "※ 미구현: 강화 비용 90% 분위(몬테카를로), 방어력 상성, 우클릭 특수 공격 DPS, 효과 포함 실측 DPS — G3 후속 과제.", "note")
+    put(ws, f"C{D_LAST+2}", f'=COUNTIF(D{D_FIRST}:D{D_LAST},"OK")&" / "&(COUNTA(D{D_FIRST}:D{D_LAST})-COUNTIF(D{D_FIRST}:D{D_LAST},"n/a"))&" 통과"', "f")
+    put(ws, f"A{D_LAST+4}", "※ 미구현: 방어력 상성, 우클릭 특수 공격 DPS, 효과 포함 실측 DPS, 유틸·회복 가치 환산 — G3 후속 과제. 난수 시뮬 판정 2행은 기본 시나리오에서만 계산한다(시나리오 변경 시 n/a).", "note")
     widths(ws, {"A": 42, "B": 26, "C": 16, "D": 10, "E": 52})
     DASH = {"first": D_FIRST, "last": D_LAST, "rows": [r[0] for r in rows]}
 
@@ -852,9 +1188,10 @@ def build(scenario_index=1):
         ("색 규칙", "파란 글씨 = 입력(수정 가능) · 검정 = 수식 · 초록 = 다른 시트 값을 가져온 링크 · 노란 칸 = 핵심 가정"),
         ("수정 방법", "Params, Items, JobIncome(부대비용), Enhance(확률), Weapons_DPS(아키타입 입력), Housing_Sinks(단가·이용률)의 파란 칸만 고친다. 나머지는 자동 계산된다."),
         ("시나리오", "Scenarios!B2 에서 1~7 선택 → Params '시나리오 적용값' 반영. 비교 스냅샷 표는 정적 값이다."),
-        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · Dashboard"),
+        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Live_Sim · Dashboard"),
         ("읽는 순서", "Params → Items → PriceSim → JobIncome → Enhance/Gacha → Housing_Sinks → FlowBalance → Dashboard"),
-        ("한계", "난수 시뮬레이션(강화 90% 분위, 뽑기 분포)은 미구현. 방어력 상성·특수 효과 실측 DPS 미반영. 90일 가격은 직업 생산성 증가(growth)와 시세 식만 반영."),
+        ("난수 시뮬", "MonteCarlo = 스크립트가 수만 회 시행한 정적 결과(시드 고정, 기본 시나리오). Live_Sim = 시트 안의 RAND() 수식으로 한 번씩 굴려 보는 체험(재계산 때마다 값이 바뀜: F9)."),
+        ("한계", "방어력 상성·특수 효과 실측 DPS·유틸 가치 미반영. MonteCarlo는 입력을 바꾸면 스크립트로 다시 생성해야 한다. 90일 가격은 직업 생산성 증가(growth)와 시세 식만 반영."),
         ("출처", "명세서 v0.1 7장(시세), 6장(강화), 9.3장(뽑기), 18장(균형), weapon-archetypes-spec.md, special-effects-spec.md, combat-spec.md"),
         ("예시 행", "Items 시트 하단에 새 품목 입력 형식 예시를 적어 두었다."),
     ]
@@ -865,6 +1202,30 @@ def build(scenario_index=1):
     widths(ws, {"A": 14, "B": 120})
 
     return wb, DASH, SNAP_HEAD_ROW
+
+
+def read_mc_inputs(path):
+    wb = load_workbook(path, data_only=True)
+    en = wb["Enhance"]
+    pm = wb["Params"]
+    ga = wb["Gacha"]
+
+    def col(c):
+        return [en[f"{c}{r}"].value for r in range(6, 26)]
+
+    def param(label):
+        for row in pm.iter_rows(min_row=4, max_col=2):
+            if row[0].value == label:
+                return row[1].value
+        raise KeyError(label)
+    return {
+        "s": col("E"), "k": col("F"), "d": col("G"), "c": col("K"),
+        "start_price": param("장비 구매가(강화 시작 장비)"),
+        "target_lv": param("목표 강화 단계(보스 진입)"),
+        "g_common": ga["B5"].value, "g_rare": ga["B6"].value, "g_epic": ga["B7"].value, "g_legend": ga["B8"].value,
+        "n_common": ga["C5"].value, "n_rare": ga["C6"].value, "n_epic": ga["C7"].value, "n_legend": ga["C8"].value,
+        "pity": param("천장(영웅 이상 보장)"),
+    }
 
 
 def recalc(path, recalc_py):
@@ -879,13 +1240,26 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--recalc", default=str(DEFAULT_RECALC))
     ap.add_argument("--no-snapshot", action="store_true")
+    ap.add_argument("--quick", action="store_true", help="난수 시행 횟수를 줄여 빠르게 생성")
     args = ap.parse_args()
     OUT.parent.mkdir(parents=True, exist_ok=True)
+
+    # 1) 기본 시나리오를 먼저 계산해 입력값을 읽고 난수 시뮬레이션을 돌린다
+    wb0, _, _ = build(1)
+    tmp0 = OUT.parent / "_tmp_base.xlsx"
+    wb0.save(tmp0)
+    res0 = recalc(tmp0, args.recalc)
+    if "error" in res0 or res0.get("status") != "success":
+        print("recalc 문제(기본):", res0)
+    vals = read_mc_inputs(tmp0)
+    tmp0.unlink()
+    mc = run_mc(vals, **({"n_enh": 8000, "n_first": 20000, "n_spec": 4000, "n_full": 500} if args.quick else {}))
+    print("MC 완료: 목표 +%d 평균 %.0f, P90 %.0f" % (mc["target_level"], mc["enh"][mc["target_level"]]["mean"], mc["enh"][mc["target_level"]]["p90"]))
 
     snap = []
     if not args.no_snapshot:
         for idx in range(1, len(SCENARIOS) + 1):
-            wb, dash, head_row = build(idx)
+            wb, dash, head_row = build(idx, mc)
             tmp = OUT.parent / f"_tmp_s{idx}.xlsx"
             wb.save(tmp)
             res = recalc(tmp, args.recalc)
@@ -900,7 +1274,7 @@ def main():
             snap.append((SCENARIOS[idx - 1][0], vals, stat))
             tmp.unlink()
 
-    wb, dash, head_row = build(1)
+    wb, dash, head_row = build(1, mc)
     if snap:
         ws = wb["Scenarios"]
         labels = []
@@ -911,7 +1285,7 @@ def main():
         for j, (nm, vals, stat) in enumerate(snap):
             put(ws, f"{CL(2 + j)}{head_row}", nm, "hdr")
         ws.row_dimensions[head_row].height = 44
-        fmts = [RATIO, RATIO, RATIO, RATIO, NUM1, NUM, NUM1, PCT, PCT, PCT, NUM, NUM1, RATIO, RATIO, PCT, PCT]
+        fmts = [RATIO, RATIO, RATIO, RATIO, NUM1, NUM, NUM1, PCT, PCT, PCT, NUM, NUM1, RATIO, RATIO, PCT, PCT, NUM2, PCT]
         for i, lab in enumerate(labels):
             r = head_row + 1 + i
             put(ws, f"A{r}", lab, "label")
