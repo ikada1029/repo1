@@ -144,7 +144,7 @@ def build(scenario_index=1):
     wb = Workbook()
     ws_leg = wb.active
     ws_leg.title = "Legend"
-    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Dashboard"]
+    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "Dashboard"]
     S = {n: wb.create_sheet(n) for n in names}
     S["Legend"] = ws_leg
     P = {}  # 파라미터 키 -> 절대 참조 문자열
@@ -333,25 +333,147 @@ def build(scenario_index=1):
 
     tr = A_LAST + 5
     section(ws, tr - 1, "티어 배율·특수 효과 슬롯 (special-effects-spec.md 4장)", 8)
-    hdr_row(ws, tr, ["티어", "등급", "티어 배율", "해금 효과 수(최대 강화 시)", "효과 1개당 기대 DPS 비중", "효과 DPS 비중 합", "상한 대비", "판정"])
-    tiers = [(0, "시작", 0.7, 0, 0.03), (1, "일반", 1.0, 0, 0.03), (2, "고급", 1.35, 0, 0.03), (3, "희귀", 1.8, 1, 0.04), (4, "영웅", 2.4, 2, 0.04), (5, "전설", 3.2, 4, 0.03)]
-    for i, (t, nm, m, n, sh) in enumerate(tiers):
+    hdr_row(ws, tr, ["티어", "등급", "티어 배율", "해금 효과 수(최대 강화 시)", "효과 DPS 비중(Effect_Packs 최대)", "효과 DPS 비중 합", "상한 대비", "판정"])
+    tiers = [(0, "시작", 0.7, 0, None), (1, "일반", 1.0, 0, None), (2, "고급", 1.35, 0, None), (3, "희귀", 1.8, 1, "Effect_Packs!$B$50"), (4, "영웅", 2.4, 2, "Effect_Packs!$C$50"), (5, "전설", 3.2, 4, "Effect_Packs!$D$50")]
+    for i, (t, nm, m, n, ref) in enumerate(tiers):
         r = tr + 1 + i
         put(ws, f"A{r}", t, "label", "0")
         put(ws, f"B{r}", nm, "label")
         put(ws, f"C{r}", m, "in", NUM2)
         put(ws, f"D{r}", n, "in", "0")
-        put(ws, f"E{r}", sh, "in", PCT)
-        put(ws, f"F{r}", f"=D{r}*E{r}", "f", PCT)
+        if ref:
+            put(ws, f"E{r}", f"={ref}", "link", PCT)
+        else:
+            put(ws, f"E{r}", 0, "in", PCT)
+        put(ws, f"F{r}", f"=E{r}", "f", PCT)
         put(ws, f"G{r}", f"=F{r}/{P['effect_cap']}", "f", PCT)
         put(ws, f"H{r}", f'=IF(F{r}<={P["effect_cap"]},"OK","검토")', "f")
     T_FIRST, T_LAST = tr + 1, tr + len(tiers)
     status_format(ws, f"H{T_FIRST}:H{T_LAST}")
     P["tier_mult_rng"] = f"Weapons_DPS!$C${T_FIRST}:$C${T_LAST}"
     P["effect_max"] = f"MAX(Weapons_DPS!$F${T_FIRST}:$F${T_LAST})"
-    put(ws, f"A{T_LAST+2}", "※ 효과 비중은 'DPS 기여 추정'이며 실제 값은 효과 설계(special-effects-spec.md) 후 시뮬레이션으로 교체한다. 전설 4개 = 3종 효과 + 각성 1.", "note")
+    put(ws, f"A{T_LAST+2}", "※ 티어별 효과 DPS 비중은 Effect_Packs 시트에서 팩·속도 클래스별로 계산한 최댓값이다(전설 = 효과 3종 + 각성 1).", "note")
     widths(ws, {"A": 18, "B": 12, "C": 12, "D": 13, **{CL(k): 9 for k in range(5, 15)}, "O": 10, "P": 11, "Q": 9, "R": 10, "S": 9, "T": 8})
     ws.freeze_panes = "C5"
+
+    # ===== Effect_Packs =====
+    ws = S["Effect_Packs"]
+    put(ws, "A1", "Effect_Packs — 테마 효과 팩 6종의 기대 DPS 비중 (special-effects-spec.md 5·6장)", "title")
+    put(ws, "A2", "비중 = 초당 발동 수 × 발동당 피해(타격 환산) × 유효 대상 수 ÷ 초당 타격 수.  타격 환산 1.0 = 평균 1회 타격 피해.  유틸(상태이상·회복)은 피해 환산 0이며 연출·상태 효과로 가치를 낸다.", "note")
+    put(ws, "A4", "치명타 비율(점프 크리티컬)", "label")
+    put(ws, "B4", 0.10, "in", PCT)
+    put(ws, "A5", "광역 비율(그룹 전투 비중)", "label")
+    put(ws, "B5", 0.40, "in", PCT)
+    put(ws, "C5", "다수 대상 효과에서 평균 추가 대상 수 = (대상 수−1) × 이 비율", "note")
+    put(ws, "A6", "티어 배율 T3", "label")
+    put(ws, "B6", 1.00, "in", NUM2)
+    put(ws, "A7", "티어 배율 T4", "label")
+    put(ws, "B7", 1.15, "in", NUM2)
+    put(ws, "A8", "티어 배율 T5", "label")
+    put(ws, "B8", 1.30, "in", NUM2)
+    hdr_row(ws, 10, ["속도 클래스", "기준 아키타입", "Weapons_DPS 행", "콤보 타격 수", "콤보 사이클(초)", "초당 타격 수"])
+    cls = [("느림", "greatsword"), ("중간", "one_hand_sword"), ("빠름", "dagger")]
+    arch_ids = [a_[0] for a_ in archs]
+    for k, (cn, aid) in enumerate(cls):
+        r = 11 + k
+        wr = 5 + arch_ids.index(aid)
+        put(ws, f"A{r}", cn, "label")
+        put(ws, f"B{r}", aid, "label")
+        put(ws, f"C{r}", wr, "in", "0")
+        put(ws, f"D{r}", f"=COUNT(Weapons_DPS!E{wr}:I{wr})", "link", "0")
+        put(ws, f"E{r}", f"=Weapons_DPS!P{wr}/20", "link", NUM2)
+        put(ws, f"F{r}", f"=D{r}/E{r}", "f", NUM2)
+    eh = ["팩", "팩 이름", "슬롯(1~3·4=각성)", "효과", "발동 유형", "파라미터(확률/N/주기/사이클수)", "내부 쿨다운(초)", "발동당 피해(타격 환산)", "대상 수", "분류", "설명",
+          "발동/초 느림", "발동/초 중간", "발동/초 빠름", "비중 느림", "비중 중간", "비중 빠름", "비중 최대", "해금 T3(+)", "해금 T4(+)", "해금 T5(+)"]
+    hdr_row(ws, 16, eh)
+    ws.row_dimensions[16].height = 44
+    # (key, 이름, [(slot, 효과, 유형, 파라미터, ICD, 피해, 대상, 분류, 설명, (T3,T4,T5 해금))])
+    PACKS = [
+        ("fire", "불꽃", [
+            (1, "화염 화상", "chance", 0.10, 3.0, 0.35, 1, "피해", "3초 지속 피해(화상)", (10, 10, 5)),
+            (2, "마무리 폭발", "finisher", 3, 0, 0.09, 3, "피해", "콤보 마무리 후 3사이클마다 범위 폭발", (None, 15, 10)),
+            (3, "불길 전이", "chance", 0.05, 5.0, 0.28, 3, "피해", "화상이 주변 대상에게 전이", (None, None, 15)),
+            (4, "화염 폭풍", "periodic", 8, 0, 0.06, 4, "피해", "8초마다 주변 지속 폭발(각성)", (None, None, 20)),
+        ]),
+        ("frost", "서리", [
+            (1, "둔화", "chance", 0.30, 2.0, 0.0, 1, "유틸", "이동 속도 감소(상태이상)", (10, 10, 5)),
+            (2, "빙결", "every_n", 4, 0, 0.08, 1, "유틸", "4번째 타격마다 짧은 빙결", (None, 15, 10)),
+            (3, "서리 파편", "chance", 0.06, 4.0, 0.30, 2, "피해", "얼음 파편이 주변에 피해", (None, None, 15)),
+            (4, "극한의 파동", "periodic", 10, 0, 0.06, 5, "유틸", "10초마다 주변 둔화+빙결(각성)", (None, None, 20)),
+        ]),
+        ("thunder", "번개", [
+            (1, "연쇄 번개", "chance", 0.08, 2.0, 0.24, 3, "피해", "주변 최대 2마리에 연쇄", (10, 10, 5)),
+            (2, "치명타 번개", "crit", 1.0, 0, 0.30, 1, "피해", "치명타 시 추가 번개", (None, 15, 10)),
+            (3, "과충전", "every_n", 8, 0, 0.14, 2, "피해", "8번째 타격마다 충전 방전", (None, None, 15)),
+            (4, "낙뢰", "periodic", 12, 0, 0.11, 3, "피해", "12초마다 대상 위치 광역 번개(각성)", (None, None, 20)),
+        ]),
+        ("holy", "성광", [
+            (1, "처치 시 회복", "chance", 0.0, 1.0, 0.0, 1, "회복", "처치 시 소량 회복(회복 상한 필요)", (10, 10, 5)),
+            (2, "아군 버프", "periodic", 15, 0, 0.0, 1, "유틸", "근처 파티원 짧은 버프", (None, 15, 10)),
+            (3, "성스러운 일격", "every_n", 10, 0, 0.25, 1, "피해", "10번째 타격마다 추가 성스러운 피해", (None, None, 15)),
+            (4, "심판", "periodic", 10, 0, 0.14, 2, "피해", "10초마다 표식 대상 추가 피해(각성)", (None, None, 20)),
+        ]),
+        ("venom", "맹독", [
+            (1, "중독", "chance", 0.20, 3.0, 0.17, 1, "피해", "스택형 지속 피해(최대 5스택)", (10, 10, 5)),
+            (2, "방어 감소 표식", "chance", 0.15, 4.0, 0.07, 1, "유틸", "방어력 감소 표식(피해 증폭 환산)", (None, 15, 10)),
+            (3, "부식 폭발", "every_n", 12, 0, 0.21, 2, "피해", "12번째 타격마다 부식 폭발", (None, None, 15)),
+            (4, "역병 확산", "periodic", 9, 0, 0.07, 4, "피해", "9초마다 주변 전이(각성)", (None, None, 20)),
+        ]),
+        ("shadow", "그림자", [
+            (1, "후방 추가 피해", "chance", 0.15, 0, 0.23, 1, "피해", "후방 공격 비율을 확률로 환산한 추가 피해", (10, 10, 5)),
+            (2, "표식 추가 타격", "every_n", 6, 0, 0.18, 1, "피해", "6번째 타격마다 표식 추가 타격", (None, 15, 10)),
+            (3, "그림자 베기", "chance", 0.05, 6.0, 0.50, 1, "피해", "낮은 확률의 강한 추가 베기", (None, None, 15)),
+            (4, "그림자 분신", "periodic", 10, 0, 0.16, 1, "피해", "10초마다 분신 추가 타격(각성)", (None, None, 20)),
+        ]),
+    ]
+    r = 17
+    for key, pname, effs in PACKS:
+        for (slot, ename, typ, param, icd, ratio, tg, cat, desc, unlock) in effs:
+            put(ws, f"A{r}", key, "label")
+            put(ws, f"B{r}", pname, "label")
+            put(ws, f"C{r}", slot, "in", "0")
+            put(ws, f"D{r}", ename, "label")
+            put(ws, f"E{r}", typ, "in")
+            put(ws, f"F{r}", param, "in", "0.00")
+            put(ws, f"G{r}", icd, "in", NUM1)
+            put(ws, f"H{r}", ratio, "in", NUM2)
+            put(ws, f"I{r}", tg, "in", "0")
+            put(ws, f"J{r}", cat, "label")
+            put(ws, f"K{r}", desc, "note")
+            for ci, crow in enumerate((11, 12, 13)):
+                hps, cyc = f"$F${crow}", f"$E${crow}"
+                rate = (f'=IF($E{r}="chance",MIN({hps}*$F{r},IF($G{r}>0,1/$G{r},999)),'
+                        f'IF($E{r}="every_n",{hps}/$F{r},'
+                        f'IF($E{r}="periodic",1/$F{r},'
+                        f'IF($E{r}="finisher",1/({cyc}*$F{r}),'
+                        f'IF($E{r}="crit",MIN({hps}*$B$4*$F{r},IF($G{r}>0,1/$G{r},999)),0)))))')
+                put(ws, f"{CL(12 + ci)}{r}", rate, "f", NUM2)
+                put(ws, f"{CL(15 + ci)}{r}", f"={CL(12 + ci)}{r}*$H{r}*(1+($I{r}-1)*$B$5)/{hps}", "f", PCT)
+            put(ws, f"R{r}", f"=MAX(O{r}:Q{r})", "f", PCT)
+            for ui, u in enumerate(unlock):
+                put(ws, f"{CL(19 + ui)}{r}", u, "in", "0")
+            r += 1
+    EF_LAST = r - 1
+    # 티어별 비중 요약
+    section(ws, 42, "티어별 효과 DPS 비중(팩 × 티어) — 해금 규칙: T3=슬롯1, T4=슬롯1~2, T5=슬롯1~4(각성 포함)", 5)
+    hdr_row(ws, 43, ["팩", "T3", "T4", "T5", "비고"])
+    ranges = {}
+    for pi, (key, pname, effs) in enumerate(PACKS):
+        rr = 44 + pi
+        put(ws, f"A{rr}", key, "label")
+        for col, k, sc in (("B", 1, "$B$6"), ("C", 2, "$B$7"), ("D", 4, "$B$8")):
+            terms = ",".join(f'SUMIFS(${c}$17:${c}${EF_LAST},$A$17:$A${EF_LAST},$A{rr},$C$17:$C${EF_LAST},"<={k}")' for c in ("O", "P", "Q"))
+            put(ws, f"{col}{rr}", f"={sc}*MAX({terms})", "f", PCT)
+        put(ws, f"E{rr}", pname, "note")
+    put(ws, "A50", "최대", "bold")
+    for col in "BCD":
+        put(ws, f"{col}50", f"=MAX({col}44:{col}49)", "f", PCT)
+    put(ws, "A51", "상한", "label")
+    put(ws, "B51", f"={P['effect_cap']}", "link", PCT)
+    put(ws, "A53", "※ 유틸·회복 효과는 피해 환산 0이라 비중에 반영되지 않는다. 연출·상태 효과의 체감은 별도 설계가 필요하다. 발동당 피해 값은 '목표 비중(효과당 2~3.5%)에서 역산한 초깃값'이며 실측으로 교체한다.", "note")
+    put(ws, "A54", "※ 빈도가 높은 효과는 발동당 피해가 작아야 예산(15%) 안에 들어간다 → 체감은 낮은 확률·큰 연출의 효과(예: 불길 전이, 그림자 베기)가 만든다.", "note")
+    widths(ws, {"A": 26, "B": 12, "C": 14, "D": 16, "E": 10, "F": 22, "G": 12, "H": 14, "I": 8, "J": 8, "K": 40, **{CL(k): 10 for k in range(12, 22)}})
+    ws.freeze_panes = "E17"
 
     # ===== Items =====
     ws = S["Items"]
@@ -730,7 +852,7 @@ def build(scenario_index=1):
         ("색 규칙", "파란 글씨 = 입력(수정 가능) · 검정 = 수식 · 초록 = 다른 시트 값을 가져온 링크 · 노란 칸 = 핵심 가정"),
         ("수정 방법", "Params, Items, JobIncome(부대비용), Enhance(확률), Weapons_DPS(아키타입 입력), Housing_Sinks(단가·이용률)의 파란 칸만 고친다. 나머지는 자동 계산된다."),
         ("시나리오", "Scenarios!B2 에서 1~7 선택 → Params '시나리오 적용값' 반영. 비교 스냅샷 표는 정적 값이다."),
-        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Dashboard"),
+        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · Dashboard"),
         ("읽는 순서", "Params → Items → PriceSim → JobIncome → Enhance/Gacha → Housing_Sinks → FlowBalance → Dashboard"),
         ("한계", "난수 시뮬레이션(강화 90% 분위, 뽑기 분포)은 미구현. 방어력 상성·특수 효과 실측 DPS 미반영. 90일 가격은 직업 생산성 증가(growth)와 시세 식만 반영."),
         ("출처", "명세서 v0.1 7장(시세), 6장(강화), 9.3장(뽑기), 18장(균형), weapon-archetypes-spec.md, special-effects-spec.md, combat-spec.md"),

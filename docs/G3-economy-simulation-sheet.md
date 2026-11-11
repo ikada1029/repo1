@@ -202,14 +202,15 @@ E_n = (c + d × R_n) / s        # c: 1회 비용, R_n: 파괴 시 재구축 비�
 |---|---|
 | 워크북 | `data/g3/G3-economy-simulation.xlsx` |
 | 생성기 | `tools/g3_sheet/build_g3.py` (입력값을 바꿔 다시 생성) |
-| 재계산 | LibreOffice로 전 수식을 계산·검증(수식 5,304개, 오류 0) |
+| 재계산 | LibreOffice로 전 수식을 계산·검증(수식 5,506개, 오류 0) |
 
 ```bash
 python3 -I tools/g3_sheet/build_g3.py                # 7개 시나리오 스냅샷 포함 생성
 python3 -I tools/g3_sheet/build_g3.py --no-snapshot  # 빠른 생성(시나리오 비교표 제외)
 ```
 
-- **시트 12개:** Legend, Params, Scenarios, Items, JobIncome, PriceSim, Enhance, Gacha, Housing_Sinks, FlowBalance, Weapons_DPS(추가), Dashboard. 모든 계산은 수식이고 입력만 파란 글씨다.
+- **시트 13개:** Legend, Params, Scenarios, Items, JobIncome, PriceSim, Enhance, Gacha, Housing_Sinks, FlowBalance, Weapons_DPS(추가), Effect_Packs(추가), Dashboard. 모든 계산은 수식이고 입력만 파란 글씨다.
+- **Effect_Packs(추가):** 테마 효과 팩 6종 × 효과 4개(24개)의 발동 빈도·발동당 피해·대상 수로 기대 DPS 비중을 속도 클래스 3종에서 계산하고 티어별 최대 비중을 Weapons_DPS 티어 표와 Dashboard에 공급한다(`special-effects-spec.md` 12장). 현재 전설 최대 14.3%(상한 15%).
 - **Weapons_DPS(추가):** 아키타입 15종의 지속 DPS 균형(`weapon-archetypes-spec.md`), 티어 배율, 특수 효과 DPS 비중 예산(`special-effects-spec.md`)을 수식으로 검증한다. 입력은 `data/weapon_catalog/archetypes.json`에서 가져온다.
 - **시나리오:** `Scenarios!B2`(1~7)를 바꾸면 모든 시트가 다시 계산된다. 비교 스냅샷 표는 스크립트가 시나리오별로 재계산해 붙인 **정적 값**이다.
 - **Dashboard:** 합격 기준 16개를 OK/검토로 판정한다. 기본 시나리오는 16/16 통과, 시나리오별 결과는 Scenarios 아래 표에 있다.
