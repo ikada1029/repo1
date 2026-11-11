@@ -217,3 +217,82 @@ combat:
 - NeoForge 1.21.1에서 `GearItem`이 휩쓸기·기본 공격 쿨다운 UI(공격 속도 표시)를 일으키지 않는지
 - 지연 보상 실측(정상 핑에서 오탐 비율)
 - PvP 구역 정책의 구체 규칙(PvP를 켜는 시점에 별도 문서로 정리)
+
+## 12. 쌍검(dual blade) 규격 (2026-11-11 제안)
+
+### 12.1 방식 결정: **쌍검 1세트 = 아이템 1개**
+
+| 방식 | 내용 | 판단 |
+|---|---|---|
+| **A. 1세트 = 아이템 1개 (채택)** | 메인핸드의 아이템 1개가 두 자루를 나타내고 콤보가 좌·우 손을 번갈아 공격 | 시리얼·강화·도감이 1개라 GearBridge 구조를 그대로 재사용, 복제·짝 분실 문제 없음 |
+| B. 실제 양손 아이템 | 메인/오프핸드에 각각 아이템(시리얼 2개) | 강화·거래·귀속이 둘로 갈라지고 밸런스·검증이 복잡해 **채택하지 않음** |
+| C. 유령 오프핸드 | 서버가 오프핸드에 가짜 아이템을 채움 | 인벤토리 복제·손실 위험으로 **채택하지 않음** |
+
+### 12.2 데이터 확장
+
+```yaml
+gear_def:
+  def_id: "dual_iron_01"
+  category: "sword"
+  archetype: "dual_blade"
+  hands: 2                    # 오프핸드 슬롯 점유(사용 금지)
+  base_damage: 3.2            # 타당 피해는 낮게, 타수로 보상
+  attack:
+    attack_left:              # 4연타 콤보 (hand가 번갈아 적용)
+      - { hand: right, factor: 1.0, knockback: 0.03, cooldown: 7,  delay: 0,
+          hitbox: { type: arc, max_range: 3.0, max_angle: 35 }, max_targets: 3 }
+      - { hand: left,  factor: 1.0, knockback: 0.03, cooldown: 7,  delay: 0,
+          hitbox: { type: arc, max_range: 3.0, max_angle: 35 }, max_targets: 3 }
+      - { hand: right, factor: 1.1, knockback: 0.05, cooldown: 8,  delay: 0,
+          hitbox: { type: arc, max_range: 3.0, max_angle: 45 }, max_targets: 3 }
+      - { hand: both,  factor: 1.5, knockback: 0.12, cooldown: 16, delay: 1,
+          hitbox: { type: arc, max_range: 3.2, max_angle: 80 }, max_targets: 4 }   # 마무리 교차 베기
+    attack_right:             # 교차 베기 + 돌진
+      hand: both
+      factor: 1.6
+      knockback: 0.10
+      cooldown: 24
+      delay: 2
+      hitbox: { type: arc, max_range: 3.5, max_angle: 110 }
+      movement: { delay: 0, speed: 0.6 }
+      max_targets: 6
+  combo: { reset_ticks: 24 }
+  fx_set: "fx_dual_basic"
+```
+
+- 새 필드: `archetype`, `hands`, 공격 항목의 `hand`(`left|right|both`). LR 이식 시 `hand` 필드는 변환 도구가 무시하거나 LR 쪽 두 동작에 매핑한다.
+- 쌍검은 **타수가 많고 타당 피해가 낮은** 밸런스(같은 티어에서 초당 피해량이 다른 아키타입과 비슷해야 함). 광역은 약하고 단일 대상에 강한 방향으로 차별화한다. 수치는 [제안], G3로 확정.
+
+### 12.3 오프핸드 규칙 (서버 검증)
+
+- `hands: 2` 무기를 들려면 **오프핸드가 비어 있어야** 한다. 오프핸드에 아이템이 있으면 장착(메인핸드로 선택)을 거부하고 안내 메시지를 보낸다(또는 오프핸드 아이템을 인벤토리로 자동 이동, 설정 `combat.dual_offhand_policy: reject|auto_move`, 기본 `reject`).
+- 쌍검을 든 동안 **오프핸드로의 이동(F 키 교체, 드래그, 단축키, 자동 이동)을 서버가 차단**한다. 인벤토리 클릭 이벤트·핫바 교체에서 검증한다. `[확인 필요: 우회 경로 전수 점검]`
+- 쌍검을 다른 슬롯으로 옮겨 메인핸드를 벗어나면 정상 상태로 복귀한다.
+
+### 12.4 이펙트·렌더링
+
+- **손 위치 오프셋**: 눈 위치 기준 좌우 약 ±0.4블록(설정)에서 호를 그린다. `hand`가 `left/right`면 해당 손 쪽, `both`면 양쪽에서 동시에 그린다(`fx-spec.md`의 `particle_arc`에 `hand` 파라미터 추가, 호의 좌우 반전).
+- **1인칭**: 한 모델에 두 자루가 들어간 쌍검 모델(교차 배치 등)을 메인핸드에 렌더한다. 바닐라 휘두르기 애니메이션은 메인 팔만 움직이므로 연출은 이펙트가 보완한다.
+- **3인칭(선택, 클라이언트 렌더러)**: 플레이어 렌더에서 쌍검을 든 경우 반대 손에 두 번째 모델을 그린다. 우선순위는 낮다(FX3 이후).
+- **양팔 모션**: 플레이어 애니메이션 라이브러리와 자체 제작 모션이 필요하므로 **후순위 확장**(`motion-authoring-guide.md`). 바닐라 백엔드 1차 범위에서는 하지 않는다.
+
+### 12.5 GearBridge·치장과의 관계
+
+- 쌍검은 **1개의 `serial`**을 가지며 강화·진화·도감·거래·귀속은 일반 무기와 동일하다.
+- 외형 스킨 교체는 같은 `category` 안에서 자유(`gearbridge-spec.md` 13장). 쌍검 스킨을 단검류에 씌우는 것은 `hands` 값이 다르므로 **같은 `archetype`끼리만** 허용(렌더·오프핸드 규칙이 달라서).
+
+### 12.6 검수 항목
+
+- [ ] 오프핸드에 아이템이 있을 때 쌍검 장착이 정책(`reject`/`auto_move`)대로 처리된다.
+- [ ] 쌍검을 든 상태에서 F 키·드래그·핫바 교체·자동 이동으로 오프핸드를 채울 수 없다.
+- [ ] 콤보가 4단 순환하고 `hand`에 따라 이펙트 호가 좌·우로 반전된다.
+- [ ] 마무리와 우클릭의 `both` 공격이 양쪽 호 이펙트와 넓은 판정을 낸다.
+- [ ] 같은 티어에서 쌍검 초당 피해량이 다른 아키타입 기준 범위 안이다(G3 지표).
+- [ ] 쌍검이 한 개의 `serial`로 강화·진화·거래 흐름을 통과한다.
+
+### 12.7 미확정
+
+1. 3인칭 두 번째 검 렌더와 양팔 모션을 도입할지, 시기
+2. `dual_offhand_policy` 기본값(`reject` 권장)과 인벤토리 우회 경로 점검 결과
+3. 쌍검의 콤보 단계 수·`factor` 분배와 밸런스 수치(G3)
+4. 쌍단검처럼 다른 `hands: 2` 아키타입을 추가할지
