@@ -236,7 +236,7 @@ gear_def:
   category: "sword"
   archetype: "dual_blade"
   hands: 2                    # 오프핸드 슬롯 점유(사용 금지)
-  base_damage: 3.2            # 타당 피해는 낮게, 타수로 보상
+  base_damage: 4.0            # 타당 피해는 낮게, 타수로 보상 (아키타입 DPS 검산 보정값, weapon-archetypes-spec.md 3.2)
   attack:
     attack_left:              # 4연타 콤보 (hand가 번갈아 적용)
       - { hand: right, factor: 1.0, knockback: 0.03, cooldown: 7,  delay: 0,
