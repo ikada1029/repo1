@@ -790,6 +790,212 @@ def build_em_sheet(ws, P, em):
     ws.freeze_panes = "B7"
 
 
+# ---------- 등급 없는 균등 풀 가구 뽑기 ----------
+FLAT_N = 68
+FLAT_STRUCTS = [
+    # id, 이름, K(선택 천장, N 배수), X(조각 교환 비용, N 배수)
+    ("F0", "균등 풀 · 천장/조각 없음", None, None),
+    ("F1", "선택 천장 K=2N", 2.0, None),
+    ("F2", "선택 천장 K=1.5N", 1.5, None),
+    ("F3", "조각 교환 X=N (중복 1조각)", None, 1.0),
+    ("F4", "조각 교환 X=1.5N", None, 1.5),
+    ("F5", "선택 천장 2N + 조각 1.5N", 2.0, 1.5),
+    ("F6", "완만: 선택 천장 3N + 조각 2N", 3.0, 2.0),
+    ("F7", "추천 후보: 선택 천장 1.5N + 조각 0.5N", 1.5, 0.5),
+]
+
+
+def _flat_target(rng, n_pool, k, x, trials):
+    rnd, rr = rng.random, rng.randrange
+    out = []
+    for _ in range(trials):
+        pulls = 0
+        owned = bytearray(n_pool) if x else None
+        shards = 0
+        while True:
+            pulls += 1
+            if k is not None and pulls >= k:
+                break
+            if x:
+                it = rr(n_pool)
+                if owned[it]:
+                    shards += 1
+                else:
+                    owned[it] = 1
+                if it == 0 or shards >= x:
+                    break
+            elif rnd() * n_pool < 1.0:
+                break
+        out.append(pulls)
+    return out
+
+
+def _flat_collection(rng, n_pool, x, trials):
+    rr = rng.randrange
+    out = []
+    for _ in range(trials):
+        owned = bytearray(n_pool)
+        missing = list(range(n_pool))
+        pos = list(range(n_pool))
+        shards = 0
+        pulls = 0
+
+        def take(it):
+            i = pos[it]
+            last = missing[-1]
+            missing[i] = last
+            pos[last] = i
+            missing.pop()
+            owned[it] = 1
+
+        while missing:
+            pulls += 1
+            it = rr(n_pool)
+            if owned[it]:
+                shards += 1
+            else:
+                take(it)
+            if x and shards >= x and missing:
+                shards -= x
+                take(missing[rr(len(missing))])
+        out.append(pulls)
+    return out
+
+
+def run_flat(n_main=20000, n_full=3000, n_sens=10000, seed=20261114):
+    N = FLAT_N
+    rows = []
+    for i, (sid, name, km, xm) in enumerate(FLAT_STRUCTS):
+        k = int(round(km * N)) if km else None
+        x = int(round(xm * N)) if xm else None
+        samples = _flat_target(random.Random(seed + i), N, k, x, n_main)
+        ss = sorted(samples)
+        ks = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+        rows.append({"id": sid, "name": name, "k": k, "x": x, "stats": _stats(samples),
+                     "within": [sum(1 for v in ss if v <= int(m * N)) / len(ss) for m in ks], "ks": [int(m * N) for m in ks]})
+    coll = []
+    for j, xm in enumerate([None, 1.0, 1.5, 2.0]):
+        x = int(round(xm * N)) if xm else None
+        coll.append({"x": x, "stats": _stats(_flat_collection(random.Random(seed + 100 + j), N, x, n_full))})
+    sens = []
+    for n_pool in (30, 50, 68, 100, 150):
+        a = _stats(_flat_target(random.Random(seed + 200 + n_pool), n_pool, None, None, n_sens))
+        b = _stats(_flat_target(random.Random(seed + 300 + n_pool), n_pool, int(round(1.5 * n_pool)), int(round(0.5 * n_pool)), n_sens))
+        sens.append({"n": n_pool, "f0": a, "f5": b})
+    xsens = []
+    for xm in (0.25, 0.5, 0.75, 1.0, 1.5):
+        x = int(round(xm * N))
+        xsens.append({"x": x, "mult": xm, "stats": _stats(_flat_target(random.Random(seed + 400 + x), N, None, x, n_sens))})
+    return {"seed": seed, "date": datetime.date.today().isoformat(), "N": N, "n_main": n_main, "n_full": n_full, "n_sens": n_sens, "rows": rows, "coll": coll, "sens": sens, "xsens": xsens}
+
+
+def build_flat_sheet(ws, P, fl):
+    put(ws, "A1", "Gacha_Flat — 등급 없는 가구 뽑기(균등 풀) 시뮬레이션 (난수 시뮬레이션, 정적 결과)", "title")
+    if fl is None:
+        put(ws, "A3", "(미생성) build_g3.py 실행 시 채워진다.", "note")
+        return
+    N = fl["N"]
+    put(ws, "A2", f"시드 {fl['seed']}(고정), 생성일 {fl['date']}, 구조당 {fl['n_main']:,}회(전체 수집 {fl['n_full']:,}회, 풀 크기 민감도 {fl['n_sens']:,}회) 시행. 풀 크기 N={N}(기본), 신규 유저(빈 컬렉션) 시작. 가격·월소득은 Params/Gacha 시트 기준.", "note")
+    put(ws, "A3", "규칙: 모든 가구가 1/N 확률(등급 없음). 선택 천장 K = 누적 K회째 지정 가구 보장 / 조각 = 중복 1개당 1조각, X조각이 모이면 지정 가구 교환(전체 수집에서는 X조각마다 미보유 가구 1개 교환).", "note")
+    put(ws, "A4", "판정 기준(입력): 지정 가구 P90 비용 ÷ 중견 월소득", "label")
+    put(ws, "F4", 0.5, "in", PCT)
+    put(ws, "G4", "[제안] 등급이 없으므로 한 개체의 가치가 낮아 기준을 월소득의 50%로 둔다", "note")
+    # --- 1 ---
+    section(ws, 6, f"1. 지정 가구 1종 획득까지 뽑기 수 (N={N})", 12)
+    hdr_row(ws, 7, ["구조", "평균(회)", "P50", "P90", "P99", "최대", "평균 비용(Coin)", "F0 대비 평균 비용", "P90 비용(Coin)", "P90 비용÷중견 월소득", "판정", "상한"])
+    first = 8
+    for i, row in enumerate(fl["rows"]):
+        r = first + i
+        st = row["stats"]
+        put(ws, f"A{r}", f'{row["id"]} {row["name"]}', "label")
+        put(ws, f"B{r}", st["mean"], "label", NUM1)
+        put(ws, f"C{r}", st["p50"], "label", NUM)
+        put(ws, f"D{r}", st["p90"], "label", NUM)
+        put(ws, f"E{r}", st["p99"], "label", NUM)
+        put(ws, f"F{r}", st["max"], "label", NUM)
+        put(ws, f"G{r}", f"=B{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"H{r}", f"=G{r}/$G${first}", "f", RATIO)
+        put(ws, f"I{r}", f"=D{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"J{r}", f"=I{r}/Gacha!$D$19", "f", PCT)
+        put(ws, f"K{r}", f'=IF(J{r}<=$F$4,"OK","검토")', "f")
+        cap = f"선택 {row['k']}회" if row["k"] else "없음"
+        put(ws, f"L{r}", cap, "note")
+    last = first + len(fl["rows"]) - 1
+    status_format(ws, f"K{first}:K{last}")
+    # --- 2 ---
+    r0 = last + 3
+    section(ws, r0, "2. 지정 가구를 K회 안에 얻을 확률", 8)
+    ks = fl["rows"][0]["ks"]
+    hdr_row(ws, r0 + 1, ["구조"] + [f"{k}회" for k in ks])
+    for i, row in enumerate(fl["rows"]):
+        r = r0 + 2 + i
+        put(ws, f"A{r}", f'{row["id"]} {row["name"]}', "label")
+        for j, pv in enumerate(row["within"]):
+            put(ws, f"{CL(2 + j)}{r}", pv, "label", PCT)
+    # --- 3 ---
+    r1 = r0 + 2 + len(fl["rows"]) + 2
+    section(ws, r1, f"3. 전체 컬렉션({N}종) 완성까지 뽑기 수 — 조각 교환 효과", 8)
+    hdr_row(ws, r1 + 1, ["조각 교환 비용 X", "평균(회)", "P50", "P90", "P99", "평균 비용(Coin)", "P90 비용(Coin)", "P90 비용÷중견 월소득"])
+    for i, c in enumerate(fl["coll"]):
+        r = r1 + 2 + i
+        st = c["stats"]
+        put(ws, f"A{r}", f"{c['x']}조각" if c["x"] else "교환 없음", "label")
+        put(ws, f"B{r}", st["mean"], "label", NUM)
+        put(ws, f"C{r}", st["p50"], "label", NUM)
+        put(ws, f"D{r}", st["p90"], "label", NUM)
+        put(ws, f"E{r}", st["p99"], "label", NUM)
+        put(ws, f"F{r}", f"=B{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"G{r}", f"=D{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"H{r}", f"=G{r}/Gacha!$D$19", "f", PCT)
+    # --- 4 ---
+    r2 = r1 + 2 + len(fl["coll"]) + 2
+    section(ws, r2, "4. 풀 크기 민감도 — F0(균등) vs F7(선택 1.5N + 조각 0.5N)", 9)
+    hdr_row(ws, r2 + 1, ["풀 크기 N", "F0 평균", "F0 P90", "F7 평균", "F7 P90", "F7 평균 비용(Coin)", "F7 P90 비용÷월소득", "F7/F0 평균 비용", "F0 P90 비용÷월소득"])
+    for i, sr in enumerate(fl["sens"]):
+        r = r2 + 2 + i
+        put(ws, f"A{r}", sr["n"], "label", "0")
+        put(ws, f"B{r}", sr["f0"]["mean"], "label", NUM1)
+        put(ws, f"C{r}", sr["f0"]["p90"], "label", NUM)
+        put(ws, f"D{r}", sr["f5"]["mean"], "label", NUM1)
+        put(ws, f"E{r}", sr["f5"]["p90"], "label", NUM)
+        put(ws, f"F{r}", f"=D{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"G{r}", f"=E{r}*{P['e_g1']}/Gacha!$D$19", "f", PCT)
+        put(ws, f"H{r}", f"=D{r}/B{r}", "f", RATIO)
+        put(ws, f"I{r}", f"=C{r}*{P['e_g1']}/Gacha!$D$19", "f", PCT)
+    # --- 4b ---
+    rx = r2 + 2 + len(fl["sens"]) + 2
+    section(ws, rx, f"4b. 조각 교환 비용 민감도 (선택 천장 없음, 중복 1조각, N={N}, 지정 가구 획득까지)", 8)
+    hdr_row(ws, rx + 1, ["교환 비용 X(조각)", "X÷N", "평균(회)", "P50", "P90", "P99", "F0 대비 평균 비용", "P90 비용÷중견 월소득"])
+    for i, xr in enumerate(fl["xsens"]):
+        r = rx + 2 + i
+        st = xr["stats"]
+        put(ws, f"A{r}", xr["x"], "label", NUM)
+        put(ws, f"B{r}", xr["mult"], "label", NUM2)
+        put(ws, f"C{r}", st["mean"], "label", NUM1)
+        put(ws, f"D{r}", st["p50"], "label", NUM)
+        put(ws, f"E{r}", st["p90"], "label", NUM)
+        put(ws, f"F{r}", st["p99"], "label", NUM)
+        put(ws, f"G{r}", f"=C{r}/$B${first}", "f", RATIO)
+        put(ws, f"H{r}", f"=E{r}*{P['e_g1']}/Gacha!$D$19", "f", PCT)
+    # --- 5 ---
+    r3 = rx + 2 + len(fl["xsens"]) + 2
+    f0_row, f5_row = first, first + 7
+    section(ws, r3, f"5. 1회 가격 설계 — 목표 평균 비용(월소득 대비)에서 역산 (N={N}, 위 1절 평균 사용)", 7)
+    hdr_row(ws, r3 + 1, ["목표: 지정 가구 평균 비용 ÷ 월소득", "F0 기준 1회 가격(Coin)", "F0 P90 비용÷월소득", "F7 기준 1회 가격(Coin)", "F7 P90 비용÷월소득", "현재 1회 가격(Coin)", "10회 가격(10% 할인)"])
+    for i, rt in enumerate([0.05, 0.10, 0.20, 0.30, 0.50]):
+        r = r3 + 2 + i
+        put(ws, f"A{r}", rt, "in", PCT)
+        put(ws, f"B{r}", f"=ROUND(A{r}*Gacha!$D$19/$B${f0_row},-1)", "f", NUM)
+        put(ws, f"C{r}", f"=B{r}*$D${f0_row}/Gacha!$D$19", "f", PCT)
+        put(ws, f"D{r}", f"=ROUND(A{r}*Gacha!$D$19/$B${f5_row},-1)", "f", NUM)
+        put(ws, f"E{r}", f"=D{r}*$D${f5_row}/Gacha!$D$19", "f", PCT)
+        put(ws, f"F{r}", f"={P['e_g1']}", "link", NUM)
+        put(ws, f"G{r}", f"=ROUND(D{r}*10*0.9,-1)", "f", NUM)
+    put(ws, f"A{r3+8}", "※ 등급이 없으면 개별 가구의 획득 확률이 모두 같아 '가격 × 풀 크기'가 난이도를 정한다. 천장·조각이 있는 구조(F7)는 같은 평균 비용에서 P90과 최악(상한)이 크게 낮아진다. 조각 가치(중복 1조각)와 교환 비용은 [제안]이며 이벤트·구매로 조각을 얻는 경로는 반영하지 않았다.", "note")
+    widths(ws, {"A": 48, "B": 18, "C": 14, "D": 18, "E": 16, "F": 18, "G": 18, "H": 18, "I": 18, "J": 20, "K": 8, "L": 14})
+    ws.freeze_panes = "B6"
+
+
 def build_live_sheet(ws, P):
     put(ws, "A1", "Live_Sim — 시트 안 RAND() 체험 시뮬레이션 (재계산할 때마다 값이 바뀐다)", "title")
     put(ws, "A2", "F9(재계산)로 다시 굴린다. 이 시트의 값은 다른 시트가 참조하지 않는다. 대량 분포는 MonteCarlo 시트(정적, 시드 고정)를 본다.", "note")
@@ -853,11 +1059,11 @@ def build_live_sheet(ws, P):
 
 
 # ---------- 빌드 ----------
-def build(scenario_index=1, mc=None, gc=None, em=None):
+def build(scenario_index=1, mc=None, gc=None, em=None, fl=None):
     wb = Workbook()
     ws_leg = wb.active
     ws_leg.title = "Legend"
-    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Gacha_Compare", "Enhance_Mitigation", "Live_Sim", "Dashboard"]
+    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Gacha_Compare", "Gacha_Flat", "Enhance_Mitigation", "Live_Sim", "Dashboard"]
     S = {n: wb.create_sheet(n) for n in names}
     S["Legend"] = ws_leg
     P = {}  # 파라미터 키 -> 절대 참조 문자열
@@ -1518,6 +1724,7 @@ def build(scenario_index=1, mc=None, gc=None, em=None):
     # ===== MonteCarlo =====
     build_mc_sheet(S["MonteCarlo"], P, mc)
     build_gc_sheet(S["Gacha_Compare"], P, gc)
+    build_flat_sheet(S["Gacha_Flat"], P, fl)
     build_em_sheet(S["Enhance_Mitigation"], P, em)
     build_live_sheet(S["Live_Sim"], P)
 
@@ -1576,7 +1783,7 @@ def build(scenario_index=1, mc=None, gc=None, em=None):
         ("색 규칙", "파란 글씨 = 입력(수정 가능) · 검정 = 수식 · 초록 = 다른 시트 값을 가져온 링크 · 노란 칸 = 핵심 가정"),
         ("수정 방법", "Params, Items, JobIncome(부대비용), Enhance(확률), Weapons_DPS(아키타입 입력), Housing_Sinks(단가·이용률)의 파란 칸만 고친다. 나머지는 자동 계산된다."),
         ("시나리오", "Scenarios!B2 에서 1~7 선택 → Params '시나리오 적용값' 반영. 비교 스냅샷 표는 정적 값이다."),
-        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Gacha_Compare · Enhance_Mitigation · Live_Sim · Dashboard"),
+        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Gacha_Compare · Gacha_Flat · Enhance_Mitigation · Live_Sim · Dashboard"),
         ("읽는 순서", "Params → Items → PriceSim → JobIncome → Enhance/Gacha → Housing_Sinks → FlowBalance → Dashboard"),
         ("난수 시뮬", "MonteCarlo = 스크립트가 수만 회 시행한 정적 결과(시드 고정, 기본 시나리오). Live_Sim = 시트 안의 RAND() 수식으로 한 번씩 굴려 보는 체험(재계산 때마다 값이 바뀜: F9)."),
         ("한계", "방어력 상성·특수 효과 실측 DPS·유틸 가치 미반영. MonteCarlo는 입력을 바꾸면 스크립트로 다시 생성해야 한다. 90일 가격은 직업 생산성 증가(growth)와 시세 식만 반영."),
@@ -1650,10 +1857,13 @@ def main():
     em = run_enh_mitigation(vals, **({"n_main": 2000, "n_sens": 800} if args.quick else {}))
     print("강화 완화 비교 완료:", ", ".join("%s +12 평균 %.0f" % (r["st"]["id"], r["stats"][12]["mean"]) for r in em["rows"]))
 
+    fl = run_flat(**({"n_main": 3000, "n_full": 400, "n_sens": 1500} if args.quick else {}))
+    print("균등 풀 가구 뽑기 완료:", ", ".join("%s 평균 %.0f" % (r["id"], r["stats"]["mean"]) for r in fl["rows"]))
+
     snap = []
     if not args.no_snapshot:
         for idx in range(1, len(SCENARIOS) + 1):
-            wb, dash, head_row = build(idx, mc, gc, em)
+            wb, dash, head_row = build(idx, mc, gc, em, fl)
             tmp = OUT.parent / f"_tmp_s{idx}.xlsx"
             wb.save(tmp)
             res = recalc(tmp, args.recalc)
@@ -1668,7 +1878,7 @@ def main():
             snap.append((SCENARIOS[idx - 1][0], vals, stat))
             tmp.unlink()
 
-    wb, dash, head_row = build(1, mc, gc, em)
+    wb, dash, head_row = build(1, mc, gc, em, fl)
     if snap:
         ws = wb["Scenarios"]
         labels = []
