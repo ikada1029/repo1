@@ -3,6 +3,28 @@
 > **신뢰도 주의:** 대부분 모드 호스팅·집계 사이트(Modrinth/CurseForge 목록 미러, moddex, mado-hosting 등)의 2차 정보다. 프로젝트 페이지 원문을 직접 읽지 못했다(이 세션은 modrinth.com 접속 불가). **채택 전에 각 모드의 `LICENSE` 파일과 프로젝트 페이지 라이선스 필드를 직접 확인**하고 이 표를 갱신한다. 법률 자문이 아니다.
 > 전제: 현금 과금 없음, 후보 모드는 **수정하지 않고** 사용(설정·데이터팩·이벤트 연동만).
 
+## 0. 공식 저장소 확인 결과 (2026-11-11, 우선 적용 — 아래 표의 TaCZ·LR 행보다 이 절이 최신)
+
+공식 저장소 README·LICENSE·브랜치 페이지를 직접 읽은 결과다(전문 전체 검토는 아님).
+
+| 항목 | TaCZ 공식 (`MCModderAnchor/TACZ`) | LR 공식 (`LesRaisins-Studios/LesRaisins-Tactical-Equipements`) |
+|---|---|---|
+| 코드 | **GNU GPL 3.0** (LICENSE = GPLv3 전문, 예외 조항 없음) | **GNU GPL 3.0** (LICENSE = GPLv3 전문) |
+| 에셋 | README: **CC BY-NC-ND 4.0** (적용 폴더·파일 범위는 명시 없음) | README: **Art Assets: All Rights Reserved** (범위 명시 없음, 아트 담당 LeComte 표기) |
+| 1.21.1 NeoForge | **공식 지원**: `1.21.1` 브랜치, README 유지보수 표에 "1.21.1 NeoForge 1.x 최신 1.2.0, Long-term Support" | **공식 `1.21.1` 브랜치 존재**(NeoForge ModDev, Java 21). 빌드가 "Official TaCZ 1.2.0 NeoForge build"를 의존 |
+| 향후 | 2.x 시리즈(1.20.1/1.21.1) "개발 중, 빌드 없음". "다른 로더·버전 지원 계획 없음" | — |
+| 제공 기능 | 총기 | README: 투척물·소모품 등 건팩 지원 확장. **근접 무기 언급은 README에서 확인 못 함** |
+| 포크·포트·재배포 | 별도 언급 없음(GPL 조항만) | 별도 언급 없음 |
+
+**의미:**
+- 이전 가정("1.21.1 빌드는 비공식 포트뿐")은 **틀렸다.** 두 모드 모두 공식 1.21.1 NeoForge 지원이 있으므로 **직접 포팅할 필요가 없고**, 비공식 포트에 의존할 이유도 없다. 명세서 2.2장의 "비공식·리스크 높음" 평가는 공식 빌드 기준으로 갱신한다.
+- 에셋 방침은 그대로다: TaCZ 에셋 = 무수정 사용(ND), LR 에셋 = 허락 없이는 수정·재배포 불가(ARR).
+- **근접 무기 지원은 미확인**이다. 앞서 CurseForge 설명에서 본 "melee" 문구가 공식 README에는 없다. 검을 TaCZ/LR 근접 체계 위에 만든다는 계획은 이 지점부터 다시 확인해야 한다(건팩 포맷과 소스 코드 기준).
+- TaCZ 1.x는 장기 지원(LTS) 상태라 큰 기능 추가는 없다. 2.x 시리즈 전환 시 호환성 변화 가능성을 위험 등록부에 기록한다.
+- 아래 1장 표의 TaCZ·LR 행(비공식 포트 기준)은 참고용으로 남긴다.
+
+출처: [TaCZ 공식 저장소](https://github.com/MCModderAnchor/TACZ), [TaCZ 브랜치](https://github.com/MCModderAnchor/TACZ/branches), [LR 공식 저장소](https://github.com/LesRaisins-Studios/LesRaisins-Tactical-Equipements), [LR 브랜치](https://github.com/LesRaisins-Studios/LesRaisins-Tactical-Equipements/branches)
+
 ## 1. 요약표
 
 | 모드 | 라이선스(코드) | 에셋 / 비고 | 모드팩 포함·재배포 | 신뢰도 |
