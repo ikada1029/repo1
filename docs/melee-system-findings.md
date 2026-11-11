@@ -9,7 +9,7 @@
 1. **LR에 근접 무기 시스템이 실제로 있다.** 이전에 README만 보고 "근접 언급 없음"이라 한 것은 불완전했다. 단검·카람빗·야구방망이 3종이 데이터 기반 근접 무기로 들어 있다.
 2. **TaCZ 본체의 "melee"는 총기의 근접 공격**(총구·개머리판 가격, `GunMeleeData`)이며, 검 같은 별도 근접 무기 타입이 아니다. 근접 무기는 LR이 제공한다.
 3. 근접 무기는 **데이터(JSON) + 애니메이션(JSON) + 상태 머신(Lua) + 모델** 조합이라서, 새 무기를 만드는 데 **Java 코드가 필수가 아니다**(데이터 팩 방식).
-4. **타격 판정은 서버가 처리하고 애니메이션 길이와 독립**이다(`delay`·`cooldown`이 틱 단위 데이터). 앞서 걱정한 "모션 길이 = DPS" 문제가 구조적으로 분리되어 있다.
+4. **공격 속도·피해·쿨다운은 서버가 관리하고 애니메이션 길이와 독립**이다(`delay`·`cooldown`이 틱 단위 데이터). 앞서 걱정한 "모션 길이 = DPS" 문제가 구조적으로 분리되어 있다. **단, 타격 대상 선정은 클라이언트가 한다**(10장 정정 참고).
 5. **무한 내구도가 기본 지원**된다(`max_durability: 0` = 무한, 파일 주석 기준).
 
 ## 2. 파일 구조 (LR 근접 무기 1종 = 아래 5종 파일)
@@ -71,7 +71,7 @@
 | 항목 | 의미 |
 |---|---|
 | 검의 기반 | **LR 근접 시스템을 기반으로 삼는 것이 가능**하다. 데이터 기반이라 신규 검 추가가 쉽다. |
-| 서버 판정 | 타격은 서버에서 `delay`/`cooldown`/`hitbox`로 처리되고 애니메이션과 독립 → G3 밸런스에서 모션 길이가 DPS를 바꾸지 않는다. 공격 속도는 `cooldown` 값으로 통제. |
+| 공격 속도·피해 | 쿨다운과 피해 적용은 서버가 처리하고 애니메이션과 독립 → G3 밸런스에서 모션 길이가 DPS를 바꾸지 않는다. 공격 속도는 `cooldown` 값으로 통제. **대상 선정은 클라이언트 신뢰**(10장), 코어 모드의 서버 재검증 필요. |
 | 무한 내구도 | 데이터 값으로 가능(`max_durability: 0`). 코어 모드의 `guard.durability`는 보조 역할. |
 | 콤보·차별화(무수정 에셋 범위) | `attack` 배열(콤보), `factor/knockback/cooldown/delay/hitbox/movement`, 무기별 `sounds`, 우리가 만든 새 Lua 상태 머신으로 기존 애니메이션의 **선택 순서**를 바꾸는 것은 에셋 파일을 수정하지 않는다(단, ARR/ND 해석상 "재배열" 여부는 저작자 확인 권장). |
 | 신규 모션 | 우리가 만든 `.animation.json` + 우리 geo 모델 + 우리 상태 머신 → **자체 에셋**. 뼈 이름 규칙(`root/lefthand/righthand/weapon/camera` 등)을 맞춘다. |
@@ -81,10 +81,64 @@
 
 ## 9. 후속 확인 항목
 
-- [ ] LR 근접 무기 아이템이 가지는 데이터 컴포넌트(시리얼·강화 저장 가능성), `lrtactical:melee` 단일 기반 아이템의 개별 아이템 식별 방식
+- [x] 데이터 컴포넌트·아이템 식별 방식 확인 → 10장 (단일 아이템 + `CUSTOM_DATA`의 `MeleeWeaponId`/`DisplayId`)
+- [ ] 우리 키(시리얼·강화 단계)를 `CUSTOM_DATA`에 추가했을 때 LR·TaCZ와 충돌 없는지 실기동 확인
+- [ ] 서버 측 근접 공격 후킹 방식(포크/믹스인/이벤트) 결정과 `guard.melee` 규격
 - [ ] `type`의 종류(`lrtactical:normal` 외)와 사용자 정의 타입 등록 가능성
 - [ ] Lua 스크립트의 라이선스 범위(코드 vs 에셋)
 - [ ] 3인칭 플레이어 애니메이터 사용 방식(`player_animator`)과 의존 라이브러리 버전
 - [ ] LR이 요구하는 TaCZ 버전(빌드 파일이 TaCZ 1.2.0 NeoForge 빌드를 참조)과 의존 라이브러리(`simplebedrockmodel`, `player-animation-lib`, `cloth-config`) 호환
 - [ ] 방패(`flash_shield`)·투척·소모품 스크립트의 재사용 가능성
 - [ ] 실제 게임에서의 판정 확인(cone/obb 시각화, 서버 지연 허용)
+
+## 10. 데이터 컴포넌트·아이템 식별·공격 흐름 (소스 확인, 2026-11-11)
+
+### 10.1 아이템 식별 — 모든 근접 무기가 하나의 아이템 ID를 공유한다
+
+- LR의 근접 무기는 **단일 아이템 `lrtactical:melee`**(`MeleeItem`)이며, 무기 종류는 아이템 스택의 `DataComponents.CUSTOM_DATA`(NBT 컴파운드) 안의 문자열 키로 구분한다.
+  - `MeleeWeaponId`: 무기 종류 ID(`namespace:path`) — 어떤 무기인지(`getId`).
+  - `DisplayId`(선택): **외형(모델·애니메이션·상태 머신·소리) 오버라이드 ID** — 없으면 `MeleeWeaponId`를 쓴다(`getDisplayId`).
+  - 두 값은 `ICustomItem`/`IMeleeWeapon` 인터페이스(`getId`, `getDisplayId`, `setId`, `isSame`)로 노출된다. 동일 무기 여부(`isSame`)는 `MeleeWeaponId` 비교다.
+- 개별 스택 고유 시리얼, 강화 단계 같은 **전용 데이터 컴포넌트는 없다.** LR이 직접 쓰는 컴포넌트는 `CUSTOM_DATA`와 바닐라 `MAX_DAMAGE`/`DAMAGE`/`MAX_STACK_SIZE`뿐이다.
+- `CUSTOM_DATA`는 **자유 형식 컴파운드**라서 우리 키(시리얼, 강화 단계, 소유자 등)를 `MeleeWeaponId`와 나란히 추가해도 LR 로직과 충돌하지 않는 구조로 보인다(`setId`는 `CustomData.update`로 해당 키만 갱신). 실제 충돌 여부는 실기동으로 확인한다. `[확인 필요]`
+
+### 10.2 설계에 주는 영향
+
+| 항목 | 영향 |
+|---|---|
+| 상점·카탈로그 키 | 명세 14.2장의 "`namespace:path`로 아이템 식별"은 이 경우 **레지스트리 ID(`lrtactical:melee`)만으로는 부족**하다. 상점·거래·도감의 키는 **`(item id, MeleeWeaponId)`** 쌍이어야 한다. 코어 모드의 레시피 필터·발급 장부·`GearBridge.getItemIdentity`도 같은 규칙을 쓴다. |
+| 시리얼·강화 저장 | `CUSTOM_DATA`에 우리 키를 두거나(기존 규칙 유지), 코어 모드가 **자체 데이터 컴포넌트**(`economycore:identity` 등)를 등록한다. 후자가 타 모드 데이터와 분리되어 안전하다. |
+| **외형 치장** | `DisplayId` 오버라이드가 **스탯과 외형을 분리하는 기능을 이미 제공**한다. 같은 무기 종류에 다른 `display`(모델·소리·상태 머신 포함)를 씌울 수 있으므로, 검 외형 스킨(`cosmetics-social-spec.md`)은 새 아이템 없이 구현 가능하다. 단 `display`가 애니메이션과 상태 머신을 함께 지정하므로 외형을 바꾸면 모션도 바뀐다. |
+| 진화 트리 | 진화 시 `MeleeWeaponId`(와 필요하면 `DisplayId`)만 교체하면 되고, 아이템 ID는 바뀌지 않는다. |
+| 내구도 | 무한 내구도는 데이터(`max_durability: 0`)로 가능하고, 공용 설정 `MELEE_ITEM_CONSUME_DURABILITY`(공통 설정, 불리언)로 **내구도 소모 자체를 끌 수 있다**. 유한 내구도 무기는 `MAX_DAMAGE`/`DAMAGE` 컴포넌트를 설정한다. |
+| 인챈트 | 바닐라 인챈트 시스템과 연동된다(`EnchantmentHelper.modifyDamage`, 불꽃 속성, 타격 후 효과). `isEnchantable`이 true이므로 우리 서버의 **별도 인챈트 서비스가 바닐라 인챈트 컴포넌트를 붙이면 효과가 적용된다.** 마법부여대·모루는 코어가 차단한다. |
+| 피해 산식 | `기본 = 공격자의 ATTACK_DAMAGE 속성값 × factor`(+ 인챈트 보정, 점프 크리티컬 1.5배). 무기 `attributes`는 `id/amount/operation`(addition, percent, multiply) 목록이다. 속성값이 플레이어 상태에 의존하므로 **강화에 따른 피해 증가는 `factor` 또는 속성 수정자 방식 중 선택**해야 한다. `[확인 필요: 속성 수정자가 스택에 어떻게 적용되는지]` |
+
+### 10.3 공격 처리 흐름 — 정정 및 보안 점검
+
+앞서 "타격 판정은 서버가 처리한다"고 정리한 것은 **부분적으로 틀렸다.** 실제 흐름은 다음과 같다.
+
+```text
+[클라이언트] preAttack: 쿨다운 확인 → CPrepareMeleeAttack 전송
+[서버]       preAttack: 쿨다운·상태 확인 후 preparingAttack = true, 쿨다운 틱 설정
+[클라이언트] delay 틱 후: collectTargets(원뿔/OBB 필터로 대상 선정) → CMeleeAttackRequest(대상 엔티티 ID 배열) 전송
+[서버]       postAttack: preparingAttack·actionCount 일치 확인 → weapon.attack(...)
+             attack: 대상별로 "거리² ≤ 최대사거리²"만 확인하고 피해·넉백·내구도·소리 처리
+```
+
+| 서버가 하는 것 | 클라이언트를 신뢰하는 것 |
+|---|---|
+| 쿨다운(틱), 준비 상태, 동작 횟수(`actionCount`) 일치 검증 | **누가 맞았는지(대상 목록) 자체** |
+| 패킷당 대상 수 상한(`MELEE_MAX_TARGET_PER_PACKET`) | 원뿔 각도·OBB 영역·시야 통과 여부(서버는 재계산하지 않음) |
+| 피해 계산·적용, 내구도, 소리 | `delay` 경과 여부(서버가 대기 시간을 강제하지 않음, 준비 상태 + 쿨다운만 확인) |
+
+- **위험:** 변조된 클라이언트는 사거리 안의 임의 엔티티를 대상으로 보낼 수 있다(원뿔 각도·벽 뒤 공격 등). PvE만 있는 서버에서는 영향이 제한적이지만, **PvP를 허용하거나 보스 기여도·랭킹을 쓰면 문제**가 된다(명세 11·12장, `cosmetics-social-spec.md` 4.2).
+- **대응(코어 모드 `guard.melee`, 제안):** 서버가 `postAttack` 시점에 `filterTargets`를 **서버에서 재계산해 클라이언트 목록과 교집합만 처리**한다. 구현 방식은 ① LR을 포크해 `postAttack`을 수정(GPL 허용), ② 믹스인으로 후킹, ③ 데미지 이벤트에서 사후 검증 중 선택. 데이터가 아닌 코드 수정이므로 **GPL 소스 제공 의무**가 따른다(`G1-mod-verification-checklist.md` 3.1).
+- 공격 쿨다운과 `delay` 검증, 대상 수 상한 설정도 운영 값으로 정리한다.
+
+### 10.4 기타 확인한 API 지점
+
+- `LrTacticalAPI.getMeleeIndex(stack)` / `getMeleeDisplay(stack)`: 인덱스·표시 정보 조회.
+- 서버 이벤트: 근접 공격 전후에 걸 수 있는 서버 이벤트는 확인하지 못했다. `MeleePreAttackEvent`는 **클라이언트 전용**(`@OnlyIn(CLIENT)`)이고 서버 후킹 지점은 별도 구현이 필요하다. `[확인 필요]`
+- 근접 무기 클래스: `MeleeItem`(Item 상속) + `IMeleeWeapon`. 새 유형은 `MeleeWeaponType`/`ModCustomTypes`로 등록(`type` 필드). `[확인 필요: 사용자 정의 유형의 등록 방식]`
+- `CustomItemCoolDowns`(커스텀 쿨다운 저장), `CombatProperties`(플레이어별 공격 상태 — 쿨다운·준비·콤보 카운터).
