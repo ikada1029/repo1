@@ -405,6 +405,193 @@ def build_mc_sheet(ws, P, mc):
     ws.freeze_panes = "A5"
 
 
+# ---------- 뽑기 천장 구조 비교 ----------
+GC_SHARD_VALUE = (1, 3, 10, 30)  # 중복 시 조각(일반, 희귀, 영웅, 전설) [제안]
+GC_STRUCTURES = [
+    # id, 이름, 영웅+ 천장, 전설 하드 천장, 전설 소프트(시작, 회당 가산), 지정 선택 천장, 조각 교환 비용
+    ("S0", "천장 없음", None, None, None, None, None),
+    ("S1", "현행: 영웅+ 50회 천장", 50, None, None, None, None),
+    ("S2", "영웅+ 50 + 전설 하드 150", 50, 150, None, None, None),
+    ("S3", "영웅+ 50 + 전설 소프트(70회부터 +1.5%p/회)", 50, 150, (70, 0.015), None, None),
+    ("S3b", "영웅+ 50 + 전설 소프트(90회부터 +0.6%p/회)", 50, 150, (90, 0.006), None, None),
+    ("S4", "영웅+ 50 + 지정 전설 선택 천장 300", 50, None, None, 300, None),
+    ("S5", "현행 + 조각 교환(지정 전설 400조각)", 50, None, None, None, 400),
+    ("S6", "전설 하드 150 + 선택 천장 450 + 조각 400", 50, 150, None, 450, 400),
+    ("S7", "추천 후보: 전설 하드 150 + 선택 450 + 조각 600", 50, 150, None, 450, 600),
+]
+
+
+def _sim_structure(rng, v, st, n_trials):
+    _, _, epic_pity, leg_hard, soft, choice, shard_cost = st
+    pc, pr, pe, pl = v["g_common"], v["g_rare"], v["g_epic"], v["g_legend"]
+    pools = (int(v["n_common"]), int(v["n_rare"]), int(v["n_epic"]), int(v["n_legend"]))
+    nl = pools[3]
+    base_total = pc + pr + pe
+    c_cut = pc / base_total
+    r_cut = (pc + pr) / base_total
+    rnd = rng.random
+    rrange = rng.randrange
+    first_leg, spec = [], []
+    for _ in range(n_trials):
+        c_epic = 0
+        c_leg = 0
+        pulls = 0
+        fl = None
+        owned = [bytearray(n) for n in pools] if shard_cost else None
+        shards = 0
+        while True:
+            pulls += 1
+            n_leg = c_leg + 1
+            p_leg = pl
+            if soft and n_leg >= soft[0]:
+                p_leg = min(1.0, pl + (n_leg - soft[0] + 1) * soft[1])
+            choice_hit = choice is not None and pulls >= choice
+            if leg_hard is not None and n_leg >= leg_hard:
+                t = 3
+            elif epic_pity is not None and c_epic >= epic_pity - 1:
+                t = 3 if rnd() < p_leg / (pe + p_leg) else 2
+            else:
+                r = rnd()
+                if r < p_leg:
+                    t = 3
+                else:
+                    r2 = (r - p_leg) / (1.0 - p_leg) if p_leg < 1.0 else 0.0
+                    t = 0 if r2 < c_cut else (1 if r2 < r_cut else 2)
+            if choice_hit:
+                t = 3
+            if t >= 2:
+                c_epic = 0
+            else:
+                c_epic += 1
+            if t == 3:
+                c_leg = 0
+                if fl is None:
+                    fl = pulls
+            else:
+                c_leg += 1
+            done = False
+            if shard_cost:
+                it = rrange(pools[t])
+                if choice_hit and t == 3:
+                    it = 0
+                if owned[t][it]:
+                    shards += GC_SHARD_VALUE[t]
+                else:
+                    owned[t][it] = 1
+                if t == 3 and it == 0:
+                    done = True
+                elif shards >= shard_cost:
+                    done = True
+            else:
+                if t == 3 and (choice_hit or rnd() < 1.0 / nl):
+                    done = True
+            if done:
+                break
+        first_leg.append(fl if fl is not None else pulls)  # 조각 교환으로 먼저 얻은 경우 교환 시점
+        spec.append(pulls)
+    return first_leg, spec
+
+
+def run_gacha_compare(v, n_main=20000, n_sens=8000, seed=20261112):
+    rng_main = random.Random(seed)
+    out = []
+    global rng
+    for st in GC_STRUCTURES:
+        rng = rng_main
+        fl, sp = _sim_structure(rng_main, v, st, n_main)
+        sps = sorted(sp)
+        ks = [100, 200, 300, 450, 600, 900, 1200]
+        out.append({
+            "id": st[0], "name": st[1], "epic_pity": st[2], "leg_hard": st[3], "soft": st[4], "choice": st[5], "shard_cost": st[6],
+            "first": _stats(fl), "spec": _stats(sp),
+            "within": [sum(1 for x in sps if x <= k) / len(sps) for k in ks], "ks": ks,
+        })
+    sens = []
+    base = GC_STRUCTURES[1]
+    for cost in (200, 300, 400, 600, 800, 1200):
+        rng = random.Random(seed + cost)
+        st = (base[0], base[1], base[2], None, None, None, cost)
+        _, sp = _sim_structure(rng, v, st, n_sens)
+        sens.append({"cost": cost, "spec": _stats(sp)})
+    return {"seed": seed, "date": datetime.date.today().isoformat(), "n_main": n_main, "n_sens": n_sens, "rows": out, "sens": sens}
+
+
+def build_gc_sheet(ws, P, gc):
+    put(ws, "A1", "Gacha_Compare — 뽑기 천장 구조 비교 (난수 시뮬레이션, 정적 결과)", "title")
+    if gc is None:
+        put(ws, "A3", "(미생성) build_g3.py 실행 시 채워진다.", "note")
+        return
+    put(ws, "A2", f"시드 {gc['seed']}(고정), 생성일 {gc['date']}, 구조당 {gc['n_main']:,}회·조각 민감도 {gc['n_sens']:,}회 시행. 가격·확률·풀 크기는 Params/Gacha 시트 기준(생성 시점). 신규 유저(빈 컬렉션) 시작 가정.", "note")
+    put(ws, "A3", "규칙: 영웅+ 천장=N회째 영웅 이상 보장 / 전설 하드=N회째 전설 보장 / 소프트=시작 회차부터 회당 전설 확률 가산(하드 천장 도달 시 보장) / 선택 천장=N회째 지정 전설 보장(누적 뽑기 기준) / 조각=중복 시 일반1·희귀3·영웅10·전설30조각, 비용만큼 모이면 지정 전설 교환.", "note")
+    put(ws, "A4", "판정 기준(입력): 전설 첫 획득 P90 비용 ÷ 중견 월소득", "label")
+    put(ws, "F4", 1.0, "in", PCT)
+    put(ws, "A5", "판정 기준(입력): 지정 전설 P90 비용 ÷ 중견 월소득", "label")
+    put(ws, "F5", 3.0, "in", PCT)
+    put(ws, "G4", "[제안] Dashboard의 100%와 동일", "note")
+    put(ws, "G5", "[제안] 지정 전설은 목표 콘텐츠라 300%까지 허용", "note")
+    base_row = 9 + 1  # 현행(S1) 행 (첫 표 기준)
+
+    def table(r0, title, key, thr_cell):
+        section(ws, r0, title, 12)
+        hdr_row(ws, r0 + 1, ["구조", "평균(회)", "P50", "P90", "P99", "최대", "평균 비용(Coin)", "현행 대비 평균 비용", "P90 비용(Coin)", "P90 비용÷중견 월소득", "판정", "상한(하드 캡)"])
+        first = r0 + 2
+        for i, row in enumerate(gc["rows"]):
+            r = first + i
+            st = row[key]
+            put(ws, f"A{r}", f'{row["id"]} {row["name"]}', "label")
+            put(ws, f"B{r}", st["mean"], "label", NUM1)
+            put(ws, f"C{r}", st["p50"], "label", NUM)
+            put(ws, f"D{r}", st["p90"], "label", NUM)
+            put(ws, f"E{r}", st["p99"], "label", NUM)
+            put(ws, f"F{r}", st["max"], "label", NUM)
+            put(ws, f"G{r}", f"=B{r}*{P['e_g1']}", "f", NUM)
+            put(ws, f"H{r}", f"=G{r}/$G${first+1}", "f", RATIO)
+            put(ws, f"I{r}", f"=D{r}*{P['e_g1']}", "f", NUM)
+            put(ws, f"J{r}", f"=I{r}/Gacha!$D$19", "f", PCT)
+            put(ws, f"K{r}", f'=IF(J{r}<={thr_cell},"OK","검토")', "f")
+            cap = []
+            if row["leg_hard"]:
+                cap.append(f"전설 {row['leg_hard']}회")
+            if row["choice"] and key == "spec":
+                cap.append(f"지정 {row['choice']}회")
+            put(ws, f"L{r}", ", ".join(cap) if cap else "없음", "note")
+        status_format(ws, f"K{first}:K{first+len(gc['rows'])-1}")
+        return first + len(gc["rows"])
+
+    e1 = table(7, "1. 전설 첫 획득까지 뽑기 수", "first", "$F$4")
+    e2 = table(e1 + 2, "2. 지정 전설 1종 획득까지 뽑기 수", "spec", "$F$5")
+    # 3. K회 안에 얻을 확률
+    r0 = e2 + 2
+    section(ws, r0, "3. 지정 전설을 K회 안에 얻을 확률", 9)
+    ks = gc["rows"][0]["ks"]
+    hdr_row(ws, r0 + 1, ["구조"] + [f"{k}회" for k in ks])
+    for i, row in enumerate(gc["rows"]):
+        r = r0 + 2 + i
+        put(ws, f"A{r}", f'{row["id"]} {row["name"]}', "label")
+        for j, pv in enumerate(row["within"]):
+            put(ws, f"{CL(2+j)}{r}", pv, "label", PCT)
+    e3 = r0 + 2 + len(gc["rows"])
+    # 4. 조각 교환 민감도
+    r0 = e3 + 2
+    section(ws, r0, "4. 조각 교환 비용 민감도 (현행 천장 + 지정 전설 교환, 지정 전설 획득까지 뽑기 수)", 8)
+    hdr_row(ws, r0 + 1, ["교환 비용(조각)", "평균(회)", "P50", "P90", "P99", "평균 비용(Coin)", "P90 비용(Coin)", "P90 비용÷중견 월소득"])
+    for i, sr in enumerate(gc["sens"]):
+        r = r0 + 2 + i
+        st = sr["spec"]
+        put(ws, f"A{r}", sr["cost"], "label", NUM)
+        put(ws, f"B{r}", st["mean"], "label", NUM1)
+        put(ws, f"C{r}", st["p50"], "label", NUM)
+        put(ws, f"D{r}", st["p90"], "label", NUM)
+        put(ws, f"E{r}", st["p99"], "label", NUM)
+        put(ws, f"F{r}", f"=B{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"G{r}", f"=D{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"H{r}", f"=G{r}/Gacha!$D$19", "f", PCT)
+    e4 = r0 + 2 + len(gc["sens"])
+    put(ws, f"A{e4+1}", "※ 조각은 신규 유저가 뽑기 중 중복에서 모은 값만 계산했다(조각 구매·이벤트 지급 없음). 천장이 완화될수록 '평균 소각(비용)'이 줄어 Coin 싱크가 감소하므로 현행 대비 평균 비용 열을 함께 본다.", "note")
+    widths(ws, {"A": 50, "B": 12, "C": 10, "D": 10, "E": 10, "F": 10, "G": 16, "H": 16, "I": 16, "J": 20, "K": 8, "L": 22})
+    ws.freeze_panes = "B7"
+
+
 def build_live_sheet(ws, P):
     put(ws, "A1", "Live_Sim — 시트 안 RAND() 체험 시뮬레이션 (재계산할 때마다 값이 바뀐다)", "title")
     put(ws, "A2", "F9(재계산)로 다시 굴린다. 이 시트의 값은 다른 시트가 참조하지 않는다. 대량 분포는 MonteCarlo 시트(정적, 시드 고정)를 본다.", "note")
@@ -468,11 +655,11 @@ def build_live_sheet(ws, P):
 
 
 # ---------- 빌드 ----------
-def build(scenario_index=1, mc=None):
+def build(scenario_index=1, mc=None, gc=None):
     wb = Workbook()
     ws_leg = wb.active
     ws_leg.title = "Legend"
-    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Live_Sim", "Dashboard"]
+    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Gacha_Compare", "Live_Sim", "Dashboard"]
     S = {n: wb.create_sheet(n) for n in names}
     S["Legend"] = ws_leg
     P = {}  # 파라미터 키 -> 절대 참조 문자열
@@ -1131,6 +1318,7 @@ def build(scenario_index=1, mc=None):
 
     # ===== MonteCarlo =====
     build_mc_sheet(S["MonteCarlo"], P, mc)
+    build_gc_sheet(S["Gacha_Compare"], P, gc)
     build_live_sheet(S["Live_Sim"], P)
 
     # ===== Dashboard =====
@@ -1188,7 +1376,7 @@ def build(scenario_index=1, mc=None):
         ("색 규칙", "파란 글씨 = 입력(수정 가능) · 검정 = 수식 · 초록 = 다른 시트 값을 가져온 링크 · 노란 칸 = 핵심 가정"),
         ("수정 방법", "Params, Items, JobIncome(부대비용), Enhance(확률), Weapons_DPS(아키타입 입력), Housing_Sinks(단가·이용률)의 파란 칸만 고친다. 나머지는 자동 계산된다."),
         ("시나리오", "Scenarios!B2 에서 1~7 선택 → Params '시나리오 적용값' 반영. 비교 스냅샷 표는 정적 값이다."),
-        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Live_Sim · Dashboard"),
+        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Gacha_Compare · Live_Sim · Dashboard"),
         ("읽는 순서", "Params → Items → PriceSim → JobIncome → Enhance/Gacha → Housing_Sinks → FlowBalance → Dashboard"),
         ("난수 시뮬", "MonteCarlo = 스크립트가 수만 회 시행한 정적 결과(시드 고정, 기본 시나리오). Live_Sim = 시트 안의 RAND() 수식으로 한 번씩 굴려 보는 체험(재계산 때마다 값이 바뀜: F9)."),
         ("한계", "방어력 상성·특수 효과 실측 DPS·유틸 가치 미반영. MonteCarlo는 입력을 바꾸면 스크립트로 다시 생성해야 한다. 90일 가격은 직업 생산성 증가(growth)와 시세 식만 반영."),
@@ -1256,10 +1444,13 @@ def main():
     mc = run_mc(vals, **({"n_enh": 8000, "n_first": 20000, "n_spec": 4000, "n_full": 500} if args.quick else {}))
     print("MC 완료: 목표 +%d 평균 %.0f, P90 %.0f" % (mc["target_level"], mc["enh"][mc["target_level"]]["mean"], mc["enh"][mc["target_level"]]["p90"]))
 
+    gc = run_gacha_compare(vals, **({"n_main": 2000, "n_sens": 800} if args.quick else {}))
+    print("뽑기 천장 비교 완료:", ", ".join("%s 지정전설 평균 %.0f" % (r["id"], r["spec"]["mean"]) for r in gc["rows"]))
+
     snap = []
     if not args.no_snapshot:
         for idx in range(1, len(SCENARIOS) + 1):
-            wb, dash, head_row = build(idx, mc)
+            wb, dash, head_row = build(idx, mc, gc)
             tmp = OUT.parent / f"_tmp_s{idx}.xlsx"
             wb.save(tmp)
             res = recalc(tmp, args.recalc)
@@ -1274,7 +1465,7 @@ def main():
             snap.append((SCENARIOS[idx - 1][0], vals, stat))
             tmp.unlink()
 
-    wb, dash, head_row = build(1, mc)
+    wb, dash, head_row = build(1, mc, gc)
     if snap:
         ws = wb["Scenarios"]
         labels = []
