@@ -14,6 +14,8 @@
 | GB-4 | 진화 시 강화 단계 처리 | 유지 / 초기화 / 일부 감소 | 미확정(밸런스 결정, 6.2장) |
 | **GB-5** | **장비 백엔드 (2026-11-11 결정)** | 바닐라 기반 + 이펙트 / LR 근접 체계 | **바닐라 백엔드를 먼저 구현하고 이펙트(`fx-spec.md`)를 붙인 뒤, 가능하면 LR 백엔드로 이식.** GearBridge는 백엔드를 추상화(`GearBackend`)해 식별·강화·진화·이벤트 구조를 공통으로 쓴다 |
 
+> **GB-5 세부 결정(2026-11-11):** 바닐라 백엔드는 **우리가 등록한 새 아이템**(`economycore:gear_sword` 등 카테고리별 아이템 + `economycore:gear`의 `def_id`)과 **자체 서버 권위 범위 공격**(`combat-spec.md`)으로 구현한다. 피해는 공격자 속성이 아니라 `base_damage(def, tier, enhance_level)` 산식으로 직접 계산하므로, 아래 5장의 "속성 수정자" 방식은 **LR 백엔드 이식 시에만 검토**한다.
+
 > **GB-5의 영향:** 이 문서에서 `(item_id, MeleeWeaponId)` 키, `DisplayId` 치장, LR의 `CUSTOM_DATA` 충돌 확인, LR 속성 수정자 확인(5장), 카탈로그→LR 데이터 팩 생성(5.1)은 **LR 백엔드 전용 항목**이다. 바닐라 백엔드에서는 `gear_key`가 단순히 `(item_id, def_id)`이며 `def_id`를 우리 컴포넌트(`economycore:gear`)에 저장하고, 공격력·공격 속도는 바닐라 속성 수정자 컴포넌트로, 내구도는 무적 컴포넌트로 처리한다. 아이템을 우리가 등록할지 바닐라 아이템에 컴포넌트를 붙일지는 GB0 스파이크에서 결정한다. 백엔드 어댑터 인터페이스는 `GearBackend { identifyDef(stack), setDef(stack, def_id), applyStats(stack, state), emitActionEvents(...) }`(제안)로 두며, 이펙트에는 `GearActionEvent`로 전달한다(`fx-spec.md` 2장).
 
 ## 1. 역할 경계
