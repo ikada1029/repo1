@@ -590,6 +590,204 @@ def build_gc_sheet(ws, P, gc):
     put(ws, f"A{e4+1}", "※ 조각은 신규 유저가 뽑기 중 중복에서 모은 값만 계산했다(조각 구매·이벤트 지급 없음). 천장이 완화될수록 '평균 소각(비용)'이 줄어 Coin 싱크가 감소하므로 현행 대비 평균 비용 열을 함께 본다.", "note")
     widths(ws, {"A": 50, "B": 12, "C": 10, "D": 10, "E": 10, "F": 10, "G": 16, "H": 16, "I": 16, "J": 20, "K": 8, "L": 22})
     ws.freeze_panes = "B7"
+    # 5. 등급 없는 균등 풀 (분석식)
+    r5 = e4 + 4
+    section(ws, r5, "5. 등급 없는 균등 풀(가구에 희귀도를 두지 않는 경우) — 분석식", 9)
+    put(ws, f"A{r5+1}", "모든 가구가 같은 확률(1/풀 크기)이라 1~4절의 등급 천장(영웅+/전설)은 의미가 없다. 지정 가구 1종을 얻는 시도는 기하분포이며, 선택 천장 K회를 두면 K회가 상한이 된다.", "note")
+    hdr_row(ws, r5 + 2, ["풀 크기 N", "지정 1종 평균(회)", "P50", "P90", "P99", "전체 수집 기대(회)", "평균 비용(Coin)", "P90 비용÷중견 월소득", "선택 천장 K=2N 평균(회)", "K=2N 평균 비용(Coin)"])
+    for i, n in enumerate([30, 50, 68, 100, 150]):
+        r = r5 + 3 + i
+        put(ws, f"A{r}", n, "in", "0")
+        put(ws, f"B{r}", f"=A{r}", "f", NUM1)
+        put(ws, f"C{r}", f"=LN(0.5)/LN(1-1/A{r})", "f", NUM)
+        put(ws, f"D{r}", f"=LN(0.1)/LN(1-1/A{r})", "f", NUM)
+        put(ws, f"E{r}", f"=LN(0.01)/LN(1-1/A{r})", "f", NUM)
+        put(ws, f"F{r}", f"=A{r}*(LN(A{r})+0.5772156649+1/(2*A{r}))", "f", NUM)
+        put(ws, f"G{r}", f"=B{r}*{P['e_g1']}", "f", NUM)
+        put(ws, f"H{r}", f"=D{r}*{P['e_g1']}/Gacha!$D$19", "f", PCT)
+        put(ws, f"I{r}", f"=(1-(1-1/A{r})^(2*A{r}))*A{r}", "f", NUM1)
+        put(ws, f"J{r}", f"=I{r}*{P['e_g1']}", "f", NUM)
+    put(ws, f"A{r5+9}", "※ 전체 수집 기대 = N(ln N + 0.577 + 1/(2N))(쿠폰 수집가 근사). 조각 교환을 쓰면 중복에서 모인 조각으로 지정 가구를 교환할 수 있어 평균이 더 줄어든다(등급 풀과 같은 효과, 조각 가치는 별도 설계).", "note")
+
+
+# ---------- 강화 파괴 완화 장치 비교 ----------
+EM_STRUCTS = [
+    # id, 이름, 설명, safe_to(이 단계 미만 파괴 없음), scroll_from, scroll_cost, refund, mode, pity_keep
+    {"id": "E0", "name": "현행: 파괴 시 소멸·재구매·0단계", "desc": "기본(Enhance 시트와 동일)", "safe_to": 0, "scroll_from": None, "scroll_cost": 0, "refund": 0.0, "mode": "reset", "pity_keep": None},
+    {"id": "E1", "name": "보호권(8단계부터 사용, 1,500 Coin/장)", "desc": "시도마다 보호권 소모 시 파괴가 '유지'로 바뀜(성공 여부와 무관하게 소모)", "safe_to": 0, "scroll_from": 8, "scroll_cost": 1500, "refund": 0.0, "mode": "reset", "pity_keep": None},
+    {"id": "E2", "name": "파괴 시 투입 강화비 50% 환급", "desc": "소멸한 장비에 쓴 강화 비용(구매가 제외)의 50%를 돌려줌", "safe_to": 0, "scroll_from": None, "scroll_cost": 0, "refund": 0.5, "mode": "reset", "pity_keep": None},
+    {"id": "E3", "name": "파괴 시 단계 절반 하락(소멸 없음)", "desc": "장비는 남고 단계만 ⌊n/2⌋로 하락, 재구매 불필요", "safe_to": 0, "scroll_from": None, "scroll_cost": 0, "refund": 0.0, "mode": "halve", "pity_keep": None},
+    {"id": "E4", "name": "안전 구간 확대(8단계 미만 파괴 없음)", "desc": "현행 5단계 미만 → 8단계 미만, 파괴 확률은 '유지'로 이동", "safe_to": 8, "scroll_from": None, "scroll_cost": 0, "refund": 0.0, "mode": "reset", "pity_keep": None},
+    {"id": "E5", "name": "강화 천장(연속 유지 8회 후 성공 확정)", "desc": "파괴 완화가 아니라 변동성 완화(비교용)", "safe_to": 0, "scroll_from": None, "scroll_cost": 0, "refund": 0.0, "mode": "reset", "pity_keep": 8},
+    {"id": "E6", "name": "추천 후보: 안전 8미만 + 보호권(10단계부터) + 환급 30%", "desc": "세 장치의 약한 조합", "safe_to": 8, "scroll_from": 10, "scroll_cost": 1500, "refund": 0.3, "mode": "reset", "pity_keep": None},
+]
+
+
+def _sim_enh(rng, v, st, n_trials, levels):
+    S_, K_, D_, C_ = v["s"], v["k"], v["d"], v["c"]
+    start = v["start_price"]
+    maxl = max(levels)
+    safe_to, sc_from, sc_cost, refund, mode, pity_keep = st["safe_to"], st["scroll_from"], st["scroll_cost"], st["refund"], st["mode"], st["pity_keep"]
+    rnd = rng.random
+    acc = {L: {"cost": [], "destroy": [], "attempts": [], "scrolls": []} for L in levels}
+    lvset = set(levels)
+    for _ in range(n_trials):
+        cost = start
+        n = 0
+        destroys = attempts = scrolls = streak = 0
+        spent = 0.0
+        done = set()
+        while n < maxl:
+            attempts += 1
+            c = C_[n]
+            cost += c
+            spent += c
+            s_ = S_[n]
+            d_ = D_[n]
+            if sc_from is not None and n >= sc_from and d_ > 0:
+                cost += sc_cost
+                scrolls += 1
+                d_eff = 0.0
+            else:
+                d_eff = 0.0 if n < safe_to else d_
+            r = rnd()
+            if (pity_keep and streak >= pity_keep) or r < s_:
+                n += 1
+                streak = 0
+                if n in lvset and n not in done:
+                    done.add(n)
+                    a_ = acc[n]
+                    a_["cost"].append(cost)
+                    a_["destroy"].append(destroys)
+                    a_["attempts"].append(attempts)
+                    a_["scrolls"].append(scrolls)
+            elif r < s_ + (1.0 - s_ - d_eff):
+                streak += 1
+            else:
+                destroys += 1
+                streak = 0
+                if refund:
+                    cost -= refund * spent
+                if mode == "reset":
+                    cost += start
+                    n = 0
+                    spent = 0.0
+                else:
+                    n = n // 2
+    out = {}
+    for L in levels:
+        a_ = acc[L]
+        st_ = _stats(a_["cost"])
+        m = len(a_["cost"])
+        st_["destroy_prob"] = sum(1 for x in a_["destroy"] if x > 0) / m
+        st_["destroy_mean"] = sum(a_["destroy"]) / m
+        st_["scroll_mean"] = sum(a_["scrolls"]) / m
+        st_["attempts_mean"] = sum(a_["attempts"]) / m
+        out[L] = st_
+    return out
+
+
+def run_enh_mitigation(v, n_main=20000, n_sens=8000, seed=20261113):
+    levels = [10, 12, 15]
+    res = []
+    for i, st in enumerate(EM_STRUCTS):
+        r_ = random.Random(seed + i)
+        res.append({"st": st, "stats": _sim_enh(r_, v, st, n_main, levels)})
+    base = EM_STRUCTS[1]
+    sens_cost = []
+    for cost in (0, 500, 1000, 1500, 2500, 4000):
+        st = dict(base, scroll_cost=cost)
+        sens_cost.append({"cost": cost, "stats": _sim_enh(random.Random(seed + 100 + cost), v, st, n_sens, [12])[12]})
+    sens_from = []
+    for frm in (5, 8, 10, 12):
+        st = dict(base, scroll_from=frm)
+        sens_from.append({"from": frm, "stats": _sim_enh(random.Random(seed + 200 + frm), v, st, n_sens, [12])[12]})
+    return {"seed": seed, "date": datetime.date.today().isoformat(), "n_main": n_main, "n_sens": n_sens, "levels": levels, "rows": res, "sens_cost": sens_cost, "sens_from": sens_from}
+
+
+def build_em_sheet(ws, P, em):
+    put(ws, "A1", "Enhance_Mitigation — 강화 파괴 완화 장치 비교 (난수 시뮬레이션, 정적 결과)", "title")
+    if em is None:
+        put(ws, "A3", "(미생성) build_g3.py 실행 시 채워진다.", "note")
+        return
+    put(ws, "A2", f"시드 {em['seed']}(고정, 구조별 오프셋), 생성일 {em['date']}, 구조당 {em['n_main']:,}회·민감도 {em['n_sens']:,}회 시행. 강화 확률·비용·장비 구매가는 Enhance/Params 시트 기준(생성 시점). 비용에는 장비 구매·재구매·보호권·환급이 포함된다.", "note")
+    put(ws, "A3", "모델: 단계마다 비용을 낸 뒤 성공/유지/파괴 판정. 파괴 시 기본은 장비 재구매+0단계 재시작(현행). 보호권=파괴 확률을 유지로 전환(소모형), 안전 구간=해당 단계 미만 파괴 없음, 환급=파괴 시 투입 강화비의 일부 반환, 단계 하락=소멸 대신 ⌊n/2⌋.", "note")
+    put(ws, "A4", "판정 기준(입력): P90 ÷ 평균 상한", "label")
+    put(ws, "F4", 2.0, "in", NUM2)
+    put(ws, "A5", "판정 기준(입력): 목표 단계 장비 소멸 확률 상한", "label")
+    put(ws, "F5", 0.30, "in", PCT)
+    put(ws, "G4", "[제안] G3 기존 기준(90% 분위 ≤ 평균의 2배)", "note")
+    put(ws, "G5", "[제안] 장비를 한 번 이상 잃는 유저 비율", "note")
+    # 구조 정의표
+    section(ws, 7, "구조 정의", 8)
+    hdr_row(ws, 8, ["구조", "설명", "안전 구간(<)", "보호권 시작 단계", "보호권 가격(Coin)", "환급 비율", "파괴 시", "강화 천장(연속 유지)"])
+    for i, row in enumerate(em["rows"]):
+        st = row["st"]
+        r = 9 + i
+        put(ws, f"A{r}", f'{st["id"]} {st["name"]}', "label")
+        put(ws, f"B{r}", st["desc"], "note")
+        put(ws, f"C{r}", st["safe_to"] if st["safe_to"] else "-", "label")
+        put(ws, f"D{r}", st["scroll_from"] if st["scroll_from"] is not None else "-", "label")
+        put(ws, f"E{r}", st["scroll_cost"] if st["scroll_from"] is not None else "-", "label", NUM)
+        put(ws, f"F{r}", st["refund"] if st["refund"] else "-", "label", PCT)
+        put(ws, f"G{r}", "소멸·재구매·0단계" if st["mode"] == "reset" else "단계 ⌊n/2⌋ 하락", "label")
+        put(ws, f"H{r}", st["pity_keep"] if st["pity_keep"] else "-", "label")
+    r0 = 9 + len(em["rows"]) + 2
+    for L in em["levels"]:
+        section(ws, r0, f"+{L} 단계 도달 총비용 (장비 구매 포함)", 13)
+        hdr_row(ws, r0 + 1, ["구조", "평균", "P50", "P90", "P99", "P90÷평균", "장비 소멸 확률(≥1회)", "평균 파괴 횟수", "평균 보호권 수", "현행 대비 평균 비용", "P50 소요 일수", "P90 소요 일수", "판정"])
+        first = r0 + 2
+        for i, row in enumerate(em["rows"]):
+            r = first + i
+            st = row["stats"][L]
+            put(ws, f"A{r}", f'{row["st"]["id"]} {row["st"]["name"]}', "label")
+            put(ws, f"B{r}", st["mean"], "label", NUM)
+            put(ws, f"C{r}", st["p50"], "label", NUM)
+            put(ws, f"D{r}", st["p90"], "label", NUM)
+            put(ws, f"E{r}", st["p99"], "label", NUM)
+            put(ws, f"F{r}", f"=D{r}/B{r}", "f", NUM2)
+            put(ws, f"G{r}", st["destroy_prob"], "label", PCT)
+            put(ws, f"H{r}", st["destroy_mean"], "label", NUM2)
+            put(ws, f"I{r}", st["scroll_mean"], "label", NUM1)
+            put(ws, f"J{r}", f"=B{r}/$B${first}", "f", RATIO)
+            put(ws, f"K{r}", f"=C{r}/{P['enh_budget']}", "f", NUM1)
+            put(ws, f"L{r}", f"=D{r}/{P['enh_budget']}", "f", NUM1)
+            put(ws, f"M{r}", f'=IF(AND(F{r}<=$F$4,G{r}<=$F$5),"OK","검토")', "f")
+        status_format(ws, f"M{first}:M{first+len(em['rows'])-1}")
+        r0 = first + len(em["rows"]) + 1
+    # 민감도
+    section(ws, r0, "보호권 가격 민감도 (+12 도달, 8단계부터 사용)", 8)
+    hdr_row(ws, r0 + 1, ["보호권 가격(Coin)", "평균", "P50", "P90", "P90÷평균", "장비 소멸 확률", "평균 보호권 수", "현행(E0) 대비 평균 비용"])
+    e0_mean_row = None
+    base12 = em["rows"][0]["stats"][12]["mean"]
+    for i, sc in enumerate(em["sens_cost"]):
+        r = r0 + 2 + i
+        st = sc["stats"]
+        put(ws, f"A{r}", sc["cost"], "label", NUM)
+        put(ws, f"B{r}", st["mean"], "label", NUM)
+        put(ws, f"C{r}", st["p50"], "label", NUM)
+        put(ws, f"D{r}", st["p90"], "label", NUM)
+        put(ws, f"E{r}", f"=D{r}/B{r}", "f", NUM2)
+        put(ws, f"F{r}", st["destroy_prob"], "label", PCT)
+        put(ws, f"G{r}", st["scroll_mean"], "label", NUM1)
+        put(ws, f"H{r}", f"=B{r}/{base12}", "f", RATIO)
+    r1 = r0 + 2 + len(em["sens_cost"]) + 1
+    section(ws, r1, "보호권 사용 시작 단계 민감도 (+12 도달, 가격 1,500 Coin)", 8)
+    hdr_row(ws, r1 + 1, ["사용 시작 단계", "평균", "P50", "P90", "P90÷평균", "장비 소멸 확률", "평균 보호권 수", "현행(E0) 대비 평균 비용"])
+    for i, sf in enumerate(em["sens_from"]):
+        r = r1 + 2 + i
+        st = sf["stats"]
+        put(ws, f"A{r}", sf["from"], "label", "0")
+        put(ws, f"B{r}", st["mean"], "label", NUM)
+        put(ws, f"C{r}", st["p50"], "label", NUM)
+        put(ws, f"D{r}", st["p90"], "label", NUM)
+        put(ws, f"E{r}", f"=D{r}/B{r}", "f", NUM2)
+        put(ws, f"F{r}", st["destroy_prob"], "label", PCT)
+        put(ws, f"G{r}", st["scroll_mean"], "label", NUM1)
+        put(ws, f"H{r}", f"=B{r}/{base12}", "f", RATIO)
+    put(ws, f"A{r1+2+len(em['sens_from'])+1}", "※ 보호권 가격은 Coin 싱크이므로 '현행 대비 평균 비용'이 낮아지면 강화 소각이 줄어든다(평균 비용이 곧 유저가 쓰는 Coin). 장비 소멸 확률은 유저 체감(손실감)을, P90÷평균은 운이 나쁠 때의 부담을 나타낸다.", "note")
+    widths(ws, {"A": 52, "B": 30, "C": 12, "D": 12, "E": 12, "F": 14, "G": 20, "H": 14, "I": 14, "J": 18, "K": 14, "L": 14, "M": 8})
+    ws.freeze_panes = "B7"
 
 
 def build_live_sheet(ws, P):
@@ -655,11 +853,11 @@ def build_live_sheet(ws, P):
 
 
 # ---------- 빌드 ----------
-def build(scenario_index=1, mc=None, gc=None):
+def build(scenario_index=1, mc=None, gc=None, em=None):
     wb = Workbook()
     ws_leg = wb.active
     ws_leg.title = "Legend"
-    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Gacha_Compare", "Live_Sim", "Dashboard"]
+    names = ["Params", "Scenarios", "Items", "JobIncome", "PriceSim", "Enhance", "Gacha", "Housing_Sinks", "FlowBalance", "Weapons_DPS", "Effect_Packs", "MonteCarlo", "Gacha_Compare", "Enhance_Mitigation", "Live_Sim", "Dashboard"]
     S = {n: wb.create_sheet(n) for n in names}
     S["Legend"] = ws_leg
     P = {}  # 파라미터 키 -> 절대 참조 문자열
@@ -1220,6 +1418,7 @@ def build(scenario_index=1, mc=None, gc=None):
     put(ws, "D20", "=D18/D19", "f", PCT)
     put(ws, "A21", "10회 구매 할인율(실효)", "label")
     put(ws, "D21", f"=1-{P['e_g10']}/(10*{P['e_g1']})", "f", PCT)
+    put(ws, "A27", "※ 가구에 등급(일반/희귀/영웅/전설)을 두지 않는 경우 이 시트의 티어 확률은 참고용이며, Gacha_Compare 5절의 등급 없는 균등 풀 분석을 본다.", "note")
     put(ws, "A23", "※ 전체 수집 기대 뽑기는 티어별 쿠폰 수집가 근사(n×H_n÷확률)이며 티어 간 최대값을 전체 근사로 본다(천장 효과 미반영 → 보수적).", "note")
     put(ws, "A24", "전체 수집 기대 뽑기(근사)", "label")
     put(ws, "D24", "=MAX(F5:F8)", "f", NUM)
@@ -1319,6 +1518,7 @@ def build(scenario_index=1, mc=None, gc=None):
     # ===== MonteCarlo =====
     build_mc_sheet(S["MonteCarlo"], P, mc)
     build_gc_sheet(S["Gacha_Compare"], P, gc)
+    build_em_sheet(S["Enhance_Mitigation"], P, em)
     build_live_sheet(S["Live_Sim"], P)
 
     # ===== Dashboard =====
@@ -1376,7 +1576,7 @@ def build(scenario_index=1, mc=None, gc=None):
         ("색 규칙", "파란 글씨 = 입력(수정 가능) · 검정 = 수식 · 초록 = 다른 시트 값을 가져온 링크 · 노란 칸 = 핵심 가정"),
         ("수정 방법", "Params, Items, JobIncome(부대비용), Enhance(확률), Weapons_DPS(아키타입 입력), Housing_Sinks(단가·이용률)의 파란 칸만 고친다. 나머지는 자동 계산된다."),
         ("시나리오", "Scenarios!B2 에서 1~7 선택 → Params '시나리오 적용값' 반영. 비교 스냅샷 표는 정적 값이다."),
-        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Gacha_Compare · Live_Sim · Dashboard"),
+        ("시트 구성", "Params · Scenarios · Items · JobIncome · PriceSim · Enhance · Gacha · Housing_Sinks · FlowBalance · Weapons_DPS · Effect_Packs · MonteCarlo · Gacha_Compare · Enhance_Mitigation · Live_Sim · Dashboard"),
         ("읽는 순서", "Params → Items → PriceSim → JobIncome → Enhance/Gacha → Housing_Sinks → FlowBalance → Dashboard"),
         ("난수 시뮬", "MonteCarlo = 스크립트가 수만 회 시행한 정적 결과(시드 고정, 기본 시나리오). Live_Sim = 시트 안의 RAND() 수식으로 한 번씩 굴려 보는 체험(재계산 때마다 값이 바뀜: F9)."),
         ("한계", "방어력 상성·특수 효과 실측 DPS·유틸 가치 미반영. MonteCarlo는 입력을 바꾸면 스크립트로 다시 생성해야 한다. 90일 가격은 직업 생산성 증가(growth)와 시세 식만 반영."),
@@ -1447,10 +1647,13 @@ def main():
     gc = run_gacha_compare(vals, **({"n_main": 2000, "n_sens": 800} if args.quick else {}))
     print("뽑기 천장 비교 완료:", ", ".join("%s 지정전설 평균 %.0f" % (r["id"], r["spec"]["mean"]) for r in gc["rows"]))
 
+    em = run_enh_mitigation(vals, **({"n_main": 2000, "n_sens": 800} if args.quick else {}))
+    print("강화 완화 비교 완료:", ", ".join("%s +12 평균 %.0f" % (r["st"]["id"], r["stats"][12]["mean"]) for r in em["rows"]))
+
     snap = []
     if not args.no_snapshot:
         for idx in range(1, len(SCENARIOS) + 1):
-            wb, dash, head_row = build(idx, mc, gc)
+            wb, dash, head_row = build(idx, mc, gc, em)
             tmp = OUT.parent / f"_tmp_s{idx}.xlsx"
             wb.save(tmp)
             res = recalc(tmp, args.recalc)
@@ -1465,7 +1668,7 @@ def main():
             snap.append((SCENARIOS[idx - 1][0], vals, stat))
             tmp.unlink()
 
-    wb, dash, head_row = build(1, mc, gc)
+    wb, dash, head_row = build(1, mc, gc, em)
     if snap:
         ws = wb["Scenarios"]
         labels = []
