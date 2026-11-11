@@ -1,0 +1,67 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.74'
+}
+
+group = mod_group_id
+version = mod_version
+base { archivesName = "${mod_id}-neoforge-${minecraft_version}" }
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+neoForge {
+    version = neo_version
+    parchment {
+        minecraftVersion = minecraft_version
+        mappingsVersion = parchment_version
+    }
+    validateAccessTransformers = true
+    runs {
+        client {
+            client()
+            gameDirectory = file('run/client_a')
+        }
+        client2 {
+            client()
+            gameDirectory = file('run/client_b')
+            programArguments.addAll '--username', 'EcoTest2'
+        }
+        server {
+            server()
+            gameDirectory = file('run/server')
+            programArgument '--nogui'
+        }
+    }
+    mods {
+        "${mod_id}" { sourceSet sourceSets.main }
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    // S9: SQLite JDBC는 jar-in-jar로 넣을 수 있는지 스파이크에서 확인 (예: org.xerial:sqlite-jdbc)
+    // S12: TaCZ/LR는 컴파일 의존으로 넣지 않는다(이벤트·데이터 수준 연동). 동시 기동 시험은 run/server/mods에 jar를 복사한다.
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.named('processResources', ProcessResources) {
+    def props = [
+        mod_id: mod_id, mod_name: mod_name, mod_version: mod_version,
+        mod_license: mod_license, mod_authors: mod_authors,
+        minecraft_version_range: '[1.21.1]', neo_version_range: '[21.1.233,)'
+    ]
+    inputs.properties props
+    filesMatching('META-INF/neoforge.mods.toml') { expand props }
+}

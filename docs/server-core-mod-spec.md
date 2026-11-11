@@ -258,6 +258,8 @@ quality_tier = tier_of(min(job_level_band, tool_tier_cap))
 
 ## 5. 코어 모드 개발 단계 (제안)
 
+> C0의 상세 계획(확인할 질문 Q1~Q12, 스파이크 S0~S13, 합격 기준, 일정)은 `docs/c0-spike-plan.md`, 프로젝트 골격 초안은 `economycore/`(미컴파일)에 있다.
+
 | 단계 | 내용 | 완료 조건 |
 |---|---|---|
 | C0 | 프로젝트 골격(NeoForge 1.21.1, Java 21), 설정 로더, 로깅 | 서버 기동·설정 리로드 |

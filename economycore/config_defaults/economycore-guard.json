@@ -1,0 +1,10 @@
+{
+  "_comment": "S1 시험용 기본값. recipe_allow_namespaces에 없는 레시피 ID는 제거 대상(기본 거부). 실제 설계는 server-core-mod-spec.md 2.1.",
+  "recipe_guard": {
+    "enabled": true,
+    "mode": "log_only",
+    "allow_namespaces": ["economycore"],
+    "allow_recipe_ids": [],
+    "deny_result_namespaces": ["lrtactical", "tacz", "farmersdelight"]
+  }
+}
