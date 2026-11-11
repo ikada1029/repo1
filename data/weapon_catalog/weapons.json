@@ -1,14 +1,36 @@
 {
  "_comment": "자동 생성(tools/weapon_catalog/gen.py). 수정하지 말고 입력 JSON을 고친 뒤 다시 생성한다. 수치는 [제안].",
  "tier_multiplier": {
+  "0": 0.7,
   "1": 1.0,
   "2": 1.35,
   "3": 1.8,
   "4": 2.4,
   "5": 3.2
  },
- "count": 346,
+ "count": 361,
  "weapons": [
+  {
+   "def_id": "one_hand_sword_wood",
+   "name_ko": "목제 검",
+   "archetype": "one_hand_sword",
+   "item": "economycore:gear_sword",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 6.0,
+   "fx_set": [
+    "fx_sword_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
   {
    "def_id": "one_hand_sword_iron",
    "name_ko": "철 검",
@@ -25,8 +47,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "one_hand_sword_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -46,8 +68,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "one_hand_sword_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -472,6 +494,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "dagger_wood",
+   "name_ko": "목제 단검",
+   "archetype": "dagger",
+   "item": "economycore:gear_sword",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 3.0,
+   "fx_set": [
+    "fx_dagger_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "dagger_iron",
    "name_ko": "철 단검",
    "archetype": "dagger",
@@ -487,8 +530,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dagger_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -508,8 +551,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dagger_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -934,6 +977,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "dual_blade_wood",
+   "name_ko": "목제 쌍검",
+   "archetype": "dual_blade",
+   "item": "economycore:gear_sword",
+   "hands": 2,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 4.0,
+   "fx_set": [
+    "fx_dual_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "dual_blade_iron",
    "name_ko": "철 쌍검",
    "archetype": "dual_blade",
@@ -949,8 +1013,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dual_blade_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -970,8 +1034,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dual_blade_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -1396,6 +1460,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "greatsword_wood",
+   "name_ko": "목제 대검",
+   "archetype": "greatsword",
+   "item": "economycore:gear_sword",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 10.0,
+   "fx_set": [
+    "fx_greatsword_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "greatsword_iron",
    "name_ko": "철 대검",
    "archetype": "greatsword",
@@ -1411,8 +1496,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "greatsword_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -1432,8 +1517,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "greatsword_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -1858,6 +1943,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "spear_wood",
+   "name_ko": "목제 창",
+   "archetype": "spear",
+   "item": "economycore:gear_polearm",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "swift",
+   "base_damage": 6.31,
+   "fx_set": [
+    "fx_spear_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "spear_iron",
    "name_ko": "철 창",
    "archetype": "spear",
@@ -1873,8 +1979,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "spear_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -1894,8 +2000,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "spear_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -2320,6 +2426,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "axe_wood",
+   "name_ko": "목제 도끼",
+   "archetype": "axe",
+   "item": "economycore:gear_axe",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "swift",
+   "base_damage": 7.87,
+   "fx_set": [
+    "fx_axe_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "axe_iron",
    "name_ko": "철 도끼",
    "archetype": "axe",
@@ -2335,8 +2462,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "axe_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -2356,8 +2483,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "axe_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -2782,6 +2909,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "rapier_wood",
+   "name_ko": "목제 레이피어",
+   "archetype": "rapier",
+   "item": "economycore:gear_sword",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 3.99,
+   "fx_set": [
+    "fx_rapier_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "rapier_iron",
    "name_ko": "철 레이피어",
    "archetype": "rapier",
@@ -2797,8 +2945,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "rapier_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -2818,8 +2966,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "rapier_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -3244,6 +3392,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "saber_wood",
+   "name_ko": "목제 곡도",
+   "archetype": "saber",
+   "item": "economycore:gear_sword",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 5.01,
+   "fx_set": [
+    "fx_saber_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "saber_iron",
    "name_ko": "철 곡도",
    "archetype": "saber",
@@ -3259,8 +3428,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "saber_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -3280,8 +3449,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "saber_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -3706,6 +3875,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "katana_wood",
+   "name_ko": "목제 카타나",
+   "archetype": "katana",
+   "item": "economycore:gear_sword",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 5.27,
+   "fx_set": [
+    "fx_katana_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "katana_iron",
    "name_ko": "철 카타나",
    "archetype": "katana",
@@ -3721,8 +3911,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "katana_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -3742,8 +3932,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "katana_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -4168,6 +4358,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "hammer_wood",
+   "name_ko": "목제 해머",
+   "archetype": "hammer",
+   "item": "economycore:gear_axe",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 11.35,
+   "fx_set": [
+    "fx_hammer_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "hammer_iron",
    "name_ko": "철 해머",
    "archetype": "hammer",
@@ -4183,8 +4394,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "hammer_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -4204,8 +4415,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "hammer_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -4630,6 +4841,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "mace_wood",
+   "name_ko": "목제 메이스",
+   "archetype": "mace",
+   "item": "economycore:gear_axe",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 7.27,
+   "fx_set": [
+    "fx_mace_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "mace_iron",
    "name_ko": "철 메이스",
    "archetype": "mace",
@@ -4645,8 +4877,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "mace_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -4666,8 +4898,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "mace_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -5092,6 +5324,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "halberd_wood",
+   "name_ko": "목제 할버드",
+   "archetype": "halberd",
+   "item": "economycore:gear_polearm",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 8.7,
+   "fx_set": [
+    "fx_halberd_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "halberd_iron",
    "name_ko": "철 할버드",
    "archetype": "halberd",
@@ -5107,8 +5360,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "halberd_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -5128,8 +5381,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "halberd_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -5554,6 +5807,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "dual_dagger_wood",
+   "name_ko": "목제 쌍단검",
+   "archetype": "dual_dagger",
+   "item": "economycore:gear_sword",
+   "hands": 2,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 3.37,
+   "fx_set": [
+    "fx_dual_dagger_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "dual_dagger_iron",
    "name_ko": "철 쌍단검",
    "archetype": "dual_dagger",
@@ -5569,8 +5843,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dual_dagger_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -5590,8 +5864,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dual_dagger_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -6016,6 +6290,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "dual_axe_wood",
+   "name_ko": "목제 쌍도끼",
+   "archetype": "dual_axe",
+   "item": "economycore:gear_axe",
+   "hands": 2,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "swift",
+   "base_damage": 7.06,
+   "fx_set": [
+    "fx_dual_axe_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "dual_axe_iron",
    "name_ko": "철 쌍도끼",
    "archetype": "dual_axe",
@@ -6031,8 +6326,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dual_axe_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -6052,8 +6347,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "dual_axe_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -6478,6 +6773,27 @@
    "status": "candidate"
   },
   {
+   "def_id": "war_scythe_wood",
+   "name_ko": "목제 대낫",
+   "archetype": "war_scythe",
+   "item": "economycore:gear_polearm",
+   "hands": 1,
+   "tier": 0,
+   "rarity": "시작",
+   "theme": "wood",
+   "variant": "balanced",
+   "base_damage": 8.2,
+   "fx_set": [
+    "fx_war_scythe_basic",
+    "fx_theme_none"
+   ],
+   "bind_policy": "bind_on_acquire",
+   "evolves_from": null,
+   "acquire": "시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개)",
+   "unique": false,
+   "status": "candidate"
+  },
+  {
    "def_id": "war_scythe_iron",
    "name_ko": "철 대낫",
    "archetype": "war_scythe",
@@ -6493,8 +6809,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "war_scythe_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },
@@ -6514,8 +6830,8 @@
     "fx_theme_none"
    ],
    "bind_policy": "tradable",
-   "evolves_from": null,
-   "acquire": "상점(기본)",
+   "evolves_from": "war_scythe_wood",
+   "acquire": "상점(기본) 또는 목제에서 진화",
    "unique": false,
    "status": "candidate"
   },

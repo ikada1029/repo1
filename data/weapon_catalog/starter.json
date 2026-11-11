@@ -1,0 +1,8 @@
+{
+  "_comment": "시작 무기 선택 규칙 (starter-weapon-spec.md). 후보 아키타입은 입문 친화적인 6종, 나머지는 상점/진화에서 해금. 수치는 [제안].",
+  "theme": "wood",
+  "offer_archetypes": ["one_hand_sword", "dagger", "dual_blade", "greatsword", "spear", "axe"],
+  "claims_per_account": 1,
+  "free_swap": {"count": 1, "window_hours": 24, "note": "최초 선택 후 24시간 안에 1회 무료 교체(교체 시 이전 무기는 회수)"},
+  "preview": {"training_dummy": true, "note": "선택 전 연습장에서 후보 6종을 체험"}
+}

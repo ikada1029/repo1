@@ -1,4 +1,4 @@
-# 근접 무기 카탈로그 (후보 346종) — 구조와 사용법
+# 근접 무기 카탈로그 (후보 361종) — 구조와 사용법
 
 > 방침(2026-11-11): "무기는 많을수록 좋다. 많이 만들어두고 넣을 것만 고른다." 그래서 **후보를 대량 생성**하고 `candidate → approved/rejected` 선별 과정을 둔다.
 > 연관: `weapon-archetypes-spec.md`(아키타입 규격), `combat-spec.md`(공격 스키마), `gearbridge-spec.md`(진화·귀속), `fx-spec.md`(효과 세트).
@@ -9,10 +9,11 @@
 | 파일 | 역할 |
 |---|---|
 | `data/weapon_catalog/archetypes.json` | 아키타입 15종 템플릿(콤보·우클릭·판정·`target_dps`) — **입력** |
-| `data/weapon_catalog/themes.json` | 티어(5), 변형(3), 테마·진화 그래프(22노드) — **입력** |
+| `data/weapon_catalog/themes.json` | 티어(6: T0~T5), 변형(3), 테마·진화 그래프(23노드) — **입력** |
 | `data/weapon_catalog/uniques.json` | 고유(네임드) 무기 16종 — **입력** |
 | `data/weapon_catalog/selection.json` | 채택/제외 선별 목록 — **입력** |
-| `data/weapon_catalog/weapons.json` | 생성된 압축 카탈로그(346종) — **출력** |
+| `data/weapon_catalog/starter.json` | 시작 무기 선택 규칙 — **입력** (`starter-weapon-spec.md`) |
+| `data/weapon_catalog/weapons.json` | 생성된 압축 카탈로그(361종) — **출력** |
 | `data/weapon_catalog/weapons_approved.json` | `approved`만 모은 출력(선별 후) |
 | `docs/weapon-catalog-list.md` | 전체 목록 표 — **출력** |
 | `tools/weapon_catalog/gen.py` | 생성기 + DPS 균형 검증 |
@@ -26,7 +27,7 @@ python3 -I tools/weapon_catalog/gen.py --only-archetype dagger
 
 ## 2. 구조
 
-**346종 = 아키타입 15종 × 테마 22종(330) + 고유 무기 16종**
+**361종 = 아키타입 15종 × 테마 23종(345) + 고유 무기 16종**
 
 ### 2.1 아키타입 15종
 
@@ -41,6 +42,7 @@ python3 -I tools/weapon_catalog/gen.py --only-archetype dagger
 
 | 티어 | 등급 | 배율(제안) | 귀속(`gearbridge-spec.md` 13장) |
 |---|---|---|---|
+| T0 | 시작(목제) | ×0.7 | 획득 시 귀속(시작 무기) |
 | T1 | 일반 | ×1.0 | 거래 가능 |
 | T2 | 고급 | ×1.35 | 거래 가능 |
 | T3 | 희귀 | ×1.8 | 거래 가능 |
@@ -48,16 +50,16 @@ python3 -I tools/weapon_catalog/gen.py --only-archetype dagger
 | T5 | 전설 | ×3.2 | 획득 시 귀속 |
 
 ```text
-철(T1) ─ 강철(T2) ┬ 불꽃(T3) ─ 용암(T4) ─ 화룡(T5)
+목제(T0) ┬ 철(T1) ─ 강철(T2) ┬ 불꽃(T3) ─ 용암(T4) ─ 화룡(T5)
                   └ 서리(T3) ─ 빙하(T4) ─ 극한(T5)
-청동(T1) ─ 은(T2) ┬ 번개(T3) ─ 폭풍(T4) ─ 천뢰(T5)
+        └ 청동(T1) ─ 은(T2) ┬ 번개(T3) ─ 폭풍(T4) ─ 천뢰(T5)
                   └ 성광(T3) ─ 천상(T4) ─ 신성(T5)
 (보스 재료 교환) ── 맹독(T3) ─ 부식(T4) ─ 역병(T5)
 (보스 재료 교환) ── 그림자(T3) ─ 암흑(T4) ─ 심연(T5)
 ```
 
 - 진화는 **같은 아키타입 안에서** 이어진다(철 한손검 → 강철 한손검 → …). 분기는 T2→T3에서만 최대 2개(결정 `gearbridge-spec.md` 13장: 분기 최대 2).
-- 깊이는 T1→T5의 **4회 진화**다. 결정(깊이 3~4단계)의 상한에 해당한다.
+- 깊이는 T0→T5의 **5회 진화**다. 시작 무기 단계(T0→T1)를 제외하면 T1→T5가 4회로 결정(깊이 3~4단계)의 상한에 해당한다. 시작 무기는 `starter-weapon-spec.md` 참고.
 - 맹독·그림자 라인은 진화 조상이 없고 **보스 재료 교환**으로 T3를 얻는다(제작·조합 금지 원칙, 명세 1.1장).
 
 ### 2.3 변형(variant)
@@ -79,7 +81,7 @@ python3 -I tools/weapon_catalog/gen.py --only-archetype dagger
 fx_set = [아키타입 기본(fx_<archetype>_basic), 테마 오버레이(fx_theme_<overlay>), (고유 무기) fx_unique_<key>]
 ```
 
-- 아키타입 기본 15종 + 테마 오버레이 8종(`none`, `steel`, `fire`, `frost`, `thunder`, `holy`, `venom`, `shadow`) + 고유 16종 = **효과 세트 약 39개**로 346종의 연출을 표현한다.
+- 아키타입 기본 15종 + 테마 오버레이 8종(`none`, `steel`, `fire`, `frost`, `thunder`, `holy`, `venom`, `shadow`) + 고유 16종 = **효과 세트 약 39개**로 361종의 연출을 표현한다.
 - 같은 오버레이를 쓰는 라인(불꽃·용암·화룡)은 티어에 따라 강도만 키운다.
 
 ### 2.5 고유 무기 16종
@@ -108,7 +110,7 @@ fx_set = [아키타입 기본(fx_<archetype>_basic), 테마 오버레이(fx_them
 ## 3. 밸런스 검증 (자동)
 
 - 지표: `DPS = base_damage × Σfactor ÷ (Σcooldown ÷ 20)` (좌공격 콤보 1사이클, 티어 배율·강화 제외).
-- 생성기가 모든 무기의 DPS를 아키타입 템플릿과 비교해 **허용 오차 ±3%** 를 확인한다(현재 346종 전부 ±0.1% 이내, 반올림 오차 수준).
+- 생성기가 모든 무기의 DPS를 아키타입 템플릿과 비교해 **허용 오차 ±3%** 를 확인한다(현재 361종 전부 ±0.1% 이내, 반올림 오차 수준).
 - 아키타입 간 기준: 일반 9.7±5%, 광역 아키타입(대검·해머·할버드·대낫) 8.7 (-10%). 기존 6종은 문서 값(9.68~9.90, 대검 8.80)을 유지한다.
 - **검증하지 않는 것:** 우클릭 특수 공격, 판정 모양에 따른 실효 대상 수, 크리티컬·후방 공격 보너스, 방어력 상성. 이 항목은 G3 시뮬레이션과 실측이 필요하다.
 
@@ -128,7 +130,7 @@ fx_set = [아키타입 기본(fx_<archetype>_basic), 테마 오버레이(fx_them
 - 이름·설명·수치는 모두 **원본 창작(`provenance: original`)** 이며 TaCZ·LR의 무기 정의나 에셋과 무관하다. 모델·텍스처·소리는 아직 없으며 별도 제작이 필요하다.
 - 같은 아키타입의 무기들은 **공격 정의(판정·콤보)가 같고** 연출·티어·변형·이름으로 구분된다. 무기마다 판정까지 다르게 하려면 `uniques.json` 또는 템플릿 변형을 늘려야 한다.
 - 베이스 `base_damage`는 티어 배율·강화 전 값이다(`base_damage(def, tier, level)` 산식, `combat-spec.md` 11장).
-- 후보 346종을 DB에 모두 넣을 필요는 없다. 채택된 `approved` 목록만 `gear_defs`로 적재한다.
+- 후보 361종을 DB에 모두 넣을 필요는 없다. 채택된 `approved` 목록만 `gear_defs`로 적재한다.
 
 ## 6. 다음 단계 제안
 

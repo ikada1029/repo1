@@ -1,12 +1,13 @@
 # 근접 무기 카탈로그 전체 목록 (자동 생성)
 
 > `tools/weapon_catalog/gen.py`가 생성. 직접 수정하지 말 것. 수치는 [제안], 모든 항목은 `candidate`(후보)이다.
-> 총 346종.
+> 총 361종.
 
 | def_id | 이름 | 아키타입 | 티어 | 등급 | 변형 | base_damage | 진화 부모 | 획득 | 귀속 |
 |---|---|---|---|---|---|---|---|---|---|
-| one_hand_sword_iron | 철 검 | one_hand_sword | T1 | 일반 | balanced | 6.0 | - | 상점(기본) | tradable |
-| one_hand_sword_bronze | 청동 검 | one_hand_sword | T1 | 일반 | heavy | 7.09 | - | 상점(기본) | tradable |
+| one_hand_sword_wood | 목제 검 | one_hand_sword | T0 | 시작 | balanced | 6.0 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| one_hand_sword_iron | 철 검 | one_hand_sword | T1 | 일반 | balanced | 6.0 | one_hand_sword_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| one_hand_sword_bronze | 청동 검 | one_hand_sword | T1 | 일반 | heavy | 7.09 | one_hand_sword_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | one_hand_sword_steel | 강철 검 | one_hand_sword | T2 | 고급 | swift | 5.45 | one_hand_sword_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | one_hand_sword_silver | 은 검 | one_hand_sword | T2 | 고급 | swift | 5.45 | one_hand_sword_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | one_hand_sword_flame | 불꽃 검 | one_hand_sword | T3 | 희귀 | heavy | 7.09 | one_hand_sword_steel | 강철에서 진화(분기 A) | tradable |
@@ -27,8 +28,9 @@
 | one_hand_sword_divine | 신성 검 | one_hand_sword | T5 | 전설 | balanced | 6.0 | one_hand_sword_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | one_hand_sword_plague | 역병 검 | one_hand_sword | T5 | 전설 | heavy | 7.09 | one_hand_sword_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | one_hand_sword_abyss | 심연 검 | one_hand_sword | T5 | 전설 | swift | 5.45 | one_hand_sword_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| dagger_iron | 철 단검 | dagger | T1 | 일반 | balanced | 3.0 | - | 상점(기본) | tradable |
-| dagger_bronze | 청동 단검 | dagger | T1 | 일반 | balanced | 3.0 | - | 상점(기본) | tradable |
+| dagger_wood | 목제 단검 | dagger | T0 | 시작 | balanced | 3.0 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| dagger_iron | 철 단검 | dagger | T1 | 일반 | balanced | 3.0 | dagger_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| dagger_bronze | 청동 단검 | dagger | T1 | 일반 | balanced | 3.0 | dagger_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | dagger_steel | 강철 단검 | dagger | T2 | 고급 | balanced | 3.0 | dagger_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | dagger_silver | 은 단검 | dagger | T2 | 고급 | heavy | 3.45 | dagger_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | dagger_flame | 불꽃 단검 | dagger | T3 | 희귀 | heavy | 3.45 | dagger_steel | 강철에서 진화(분기 A) | tradable |
@@ -49,8 +51,9 @@
 | dagger_divine | 신성 단검 | dagger | T5 | 전설 | balanced | 3.0 | dagger_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dagger_plague | 역병 단검 | dagger | T5 | 전설 | heavy | 3.45 | dagger_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dagger_abyss | 심연 단검 | dagger | T5 | 전설 | swift | 2.55 | dagger_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| dual_blade_iron | 철 쌍검 | dual_blade | T1 | 일반 | balanced | 4.0 | - | 상점(기본) | tradable |
-| dual_blade_bronze | 청동 쌍검 | dual_blade | T1 | 일반 | heavy | 4.53 | - | 상점(기본) | tradable |
+| dual_blade_wood | 목제 쌍검 | dual_blade | T0 | 시작 | balanced | 4.0 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| dual_blade_iron | 철 쌍검 | dual_blade | T1 | 일반 | balanced | 4.0 | dual_blade_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| dual_blade_bronze | 청동 쌍검 | dual_blade | T1 | 일반 | heavy | 4.53 | dual_blade_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | dual_blade_steel | 강철 쌍검 | dual_blade | T2 | 고급 | balanced | 4.0 | dual_blade_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | dual_blade_silver | 은 쌍검 | dual_blade | T2 | 고급 | swift | 3.47 | dual_blade_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | dual_blade_flame | 불꽃 쌍검 | dual_blade | T3 | 희귀 | heavy | 4.53 | dual_blade_steel | 강철에서 진화(분기 A) | tradable |
@@ -71,8 +74,9 @@
 | dual_blade_divine | 신성 쌍검 | dual_blade | T5 | 전설 | balanced | 4.0 | dual_blade_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dual_blade_plague | 역병 쌍검 | dual_blade | T5 | 전설 | heavy | 4.53 | dual_blade_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dual_blade_abyss | 심연 쌍검 | dual_blade | T5 | 전설 | swift | 3.47 | dual_blade_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| greatsword_iron | 철 대검 | greatsword | T1 | 일반 | balanced | 10.0 | - | 상점(기본) | tradable |
-| greatsword_bronze | 청동 대검 | greatsword | T1 | 일반 | heavy | 11.4 | - | 상점(기본) | tradable |
+| greatsword_wood | 목제 대검 | greatsword | T0 | 시작 | balanced | 10.0 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| greatsword_iron | 철 대검 | greatsword | T1 | 일반 | balanced | 10.0 | greatsword_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| greatsword_bronze | 청동 대검 | greatsword | T1 | 일반 | heavy | 11.4 | greatsword_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | greatsword_steel | 강철 대검 | greatsword | T2 | 고급 | balanced | 10.0 | greatsword_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | greatsword_silver | 은 대검 | greatsword | T2 | 고급 | heavy | 11.4 | greatsword_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | greatsword_flame | 불꽃 대검 | greatsword | T3 | 희귀 | heavy | 11.4 | greatsword_steel | 강철에서 진화(분기 A) | tradable |
@@ -93,8 +97,9 @@
 | greatsword_divine | 신성 대검 | greatsword | T5 | 전설 | balanced | 10.0 | greatsword_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | greatsword_plague | 역병 대검 | greatsword | T5 | 전설 | balanced | 10.0 | greatsword_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | greatsword_abyss | 심연 대검 | greatsword | T5 | 전설 | heavy | 11.4 | greatsword_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| spear_iron | 철 창 | spear | T1 | 일반 | balanced | 6.8 | - | 상점(기본) | tradable |
-| spear_bronze | 청동 창 | spear | T1 | 일반 | heavy | 7.77 | - | 상점(기본) | tradable |
+| spear_wood | 목제 창 | spear | T0 | 시작 | swift | 6.31 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| spear_iron | 철 창 | spear | T1 | 일반 | balanced | 6.8 | spear_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| spear_bronze | 청동 창 | spear | T1 | 일반 | heavy | 7.77 | spear_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | spear_steel | 강철 창 | spear | T2 | 고급 | balanced | 6.8 | spear_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | spear_silver | 은 창 | spear | T2 | 고급 | swift | 6.31 | spear_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | spear_flame | 불꽃 창 | spear | T3 | 희귀 | heavy | 7.77 | spear_steel | 강철에서 진화(분기 A) | tradable |
@@ -115,8 +120,9 @@
 | spear_divine | 신성 창 | spear | T5 | 전설 | balanced | 6.8 | spear_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | spear_plague | 역병 창 | spear | T5 | 전설 | balanced | 6.8 | spear_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | spear_abyss | 심연 창 | spear | T5 | 전설 | swift | 6.31 | spear_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| axe_iron | 철 도끼 | axe | T1 | 일반 | balanced | 8.8 | - | 상점(기본) | tradable |
-| axe_bronze | 청동 도끼 | axe | T1 | 일반 | heavy | 10.19 | - | 상점(기본) | tradable |
+| axe_wood | 목제 도끼 | axe | T0 | 시작 | swift | 7.87 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| axe_iron | 철 도끼 | axe | T1 | 일반 | balanced | 8.8 | axe_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| axe_bronze | 청동 도끼 | axe | T1 | 일반 | heavy | 10.19 | axe_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | axe_steel | 강철 도끼 | axe | T2 | 고급 | swift | 7.87 | axe_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | axe_silver | 은 도끼 | axe | T2 | 고급 | swift | 7.87 | axe_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | axe_flame | 불꽃 도끼 | axe | T3 | 희귀 | heavy | 10.19 | axe_steel | 강철에서 진화(분기 A) | tradable |
@@ -137,8 +143,9 @@
 | axe_divine | 신성 도끼 | axe | T5 | 전설 | balanced | 8.8 | axe_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | axe_plague | 역병 도끼 | axe | T5 | 전설 | heavy | 10.19 | axe_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | axe_abyss | 심연 도끼 | axe | T5 | 전설 | swift | 7.87 | axe_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| rapier_iron | 철 레이피어 | rapier | T1 | 일반 | balanced | 3.99 | - | 상점(기본) | tradable |
-| rapier_bronze | 청동 레이피어 | rapier | T1 | 일반 | heavy | 4.56 | - | 상점(기본) | tradable |
+| rapier_wood | 목제 레이피어 | rapier | T0 | 시작 | balanced | 3.99 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| rapier_iron | 철 레이피어 | rapier | T1 | 일반 | balanced | 3.99 | rapier_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| rapier_bronze | 청동 레이피어 | rapier | T1 | 일반 | heavy | 4.56 | rapier_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | rapier_steel | 강철 레이피어 | rapier | T2 | 고급 | balanced | 3.99 | rapier_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | rapier_silver | 은 레이피어 | rapier | T2 | 고급 | swift | 3.56 | rapier_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | rapier_flame | 불꽃 레이피어 | rapier | T3 | 희귀 | balanced | 3.99 | rapier_steel | 강철에서 진화(분기 A) | tradable |
@@ -159,8 +166,9 @@
 | rapier_divine | 신성 레이피어 | rapier | T5 | 전설 | balanced | 3.99 | rapier_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | rapier_plague | 역병 레이피어 | rapier | T5 | 전설 | heavy | 4.56 | rapier_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | rapier_abyss | 심연 레이피어 | rapier | T5 | 전설 | swift | 3.56 | rapier_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| saber_iron | 철 곡도 | saber | T1 | 일반 | balanced | 5.01 | - | 상점(기본) | tradable |
-| saber_bronze | 청동 곡도 | saber | T1 | 일반 | heavy | 5.64 | - | 상점(기본) | tradable |
+| saber_wood | 목제 곡도 | saber | T0 | 시작 | balanced | 5.01 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| saber_iron | 철 곡도 | saber | T1 | 일반 | balanced | 5.01 | saber_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| saber_bronze | 청동 곡도 | saber | T1 | 일반 | heavy | 5.64 | saber_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | saber_steel | 강철 곡도 | saber | T2 | 고급 | balanced | 5.01 | saber_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | saber_silver | 은 곡도 | saber | T2 | 고급 | swift | 4.54 | saber_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | saber_flame | 불꽃 곡도 | saber | T3 | 희귀 | heavy | 5.64 | saber_steel | 강철에서 진화(분기 A) | tradable |
@@ -181,8 +189,9 @@
 | saber_divine | 신성 곡도 | saber | T5 | 전설 | swift | 4.54 | saber_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | saber_plague | 역병 곡도 | saber | T5 | 전설 | balanced | 5.01 | saber_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | saber_abyss | 심연 곡도 | saber | T5 | 전설 | swift | 4.54 | saber_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| katana_iron | 철 카타나 | katana | T1 | 일반 | balanced | 5.27 | - | 상점(기본) | tradable |
-| katana_bronze | 청동 카타나 | katana | T1 | 일반 | heavy | 6.1 | - | 상점(기본) | tradable |
+| katana_wood | 목제 카타나 | katana | T0 | 시작 | balanced | 5.27 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| katana_iron | 철 카타나 | katana | T1 | 일반 | balanced | 5.27 | katana_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| katana_bronze | 청동 카타나 | katana | T1 | 일반 | heavy | 6.1 | katana_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | katana_steel | 강철 카타나 | katana | T2 | 고급 | balanced | 5.27 | katana_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | katana_silver | 은 카타나 | katana | T2 | 고급 | swift | 4.72 | katana_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | katana_flame | 불꽃 카타나 | katana | T3 | 희귀 | heavy | 6.1 | katana_steel | 강철에서 진화(분기 A) | tradable |
@@ -203,8 +212,9 @@
 | katana_divine | 신성 카타나 | katana | T5 | 전설 | balanced | 5.27 | katana_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | katana_plague | 역병 카타나 | katana | T5 | 전설 | heavy | 6.1 | katana_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | katana_abyss | 심연 카타나 | katana | T5 | 전설 | swift | 4.72 | katana_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| hammer_iron | 철 해머 | hammer | T1 | 일반 | swift | 10.21 | - | 상점(기본) | tradable |
-| hammer_bronze | 청동 해머 | hammer | T1 | 일반 | heavy | 13.05 | - | 상점(기본) | tradable |
+| hammer_wood | 목제 해머 | hammer | T0 | 시작 | balanced | 11.35 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| hammer_iron | 철 해머 | hammer | T1 | 일반 | swift | 10.21 | hammer_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| hammer_bronze | 청동 해머 | hammer | T1 | 일반 | heavy | 13.05 | hammer_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | hammer_steel | 강철 해머 | hammer | T2 | 고급 | swift | 10.21 | hammer_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | hammer_silver | 은 해머 | hammer | T2 | 고급 | swift | 10.21 | hammer_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | hammer_flame | 불꽃 해머 | hammer | T3 | 희귀 | balanced | 11.35 | hammer_steel | 강철에서 진화(분기 A) | tradable |
@@ -225,8 +235,9 @@
 | hammer_divine | 신성 해머 | hammer | T5 | 전설 | balanced | 11.35 | hammer_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | hammer_plague | 역병 해머 | hammer | T5 | 전설 | heavy | 13.05 | hammer_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | hammer_abyss | 심연 해머 | hammer | T5 | 전설 | swift | 10.21 | hammer_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| mace_iron | 철 메이스 | mace | T1 | 일반 | balanced | 7.27 | - | 상점(기본) | tradable |
-| mace_bronze | 청동 메이스 | mace | T1 | 일반 | balanced | 7.27 | - | 상점(기본) | tradable |
+| mace_wood | 목제 메이스 | mace | T0 | 시작 | balanced | 7.27 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| mace_iron | 철 메이스 | mace | T1 | 일반 | balanced | 7.27 | mace_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| mace_bronze | 청동 메이스 | mace | T1 | 일반 | balanced | 7.27 | mace_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | mace_steel | 강철 메이스 | mace | T2 | 고급 | balanced | 7.27 | mace_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | mace_silver | 은 메이스 | mace | T2 | 고급 | swift | 6.66 | mace_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | mace_flame | 불꽃 메이스 | mace | T3 | 희귀 | heavy | 8.33 | mace_steel | 강철에서 진화(분기 A) | tradable |
@@ -247,8 +258,9 @@
 | mace_divine | 신성 메이스 | mace | T5 | 전설 | balanced | 7.27 | mace_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | mace_plague | 역병 메이스 | mace | T5 | 전설 | balanced | 7.27 | mace_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | mace_abyss | 심연 메이스 | mace | T5 | 전설 | swift | 6.66 | mace_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| halberd_iron | 철 할버드 | halberd | T1 | 일반 | balanced | 8.7 | - | 상점(기본) | tradable |
-| halberd_bronze | 청동 할버드 | halberd | T1 | 일반 | heavy | 10.0 | - | 상점(기본) | tradable |
+| halberd_wood | 목제 할버드 | halberd | T0 | 시작 | balanced | 8.7 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| halberd_iron | 철 할버드 | halberd | T1 | 일반 | balanced | 8.7 | halberd_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| halberd_bronze | 청동 할버드 | halberd | T1 | 일반 | heavy | 10.0 | halberd_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | halberd_steel | 강철 할버드 | halberd | T2 | 고급 | balanced | 8.7 | halberd_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | halberd_silver | 은 할버드 | halberd | T2 | 고급 | swift | 7.83 | halberd_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | halberd_flame | 불꽃 할버드 | halberd | T3 | 희귀 | balanced | 8.7 | halberd_steel | 강철에서 진화(분기 A) | tradable |
@@ -269,8 +281,9 @@
 | halberd_divine | 신성 할버드 | halberd | T5 | 전설 | balanced | 8.7 | halberd_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | halberd_plague | 역병 할버드 | halberd | T5 | 전설 | heavy | 10.0 | halberd_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | halberd_abyss | 심연 할버드 | halberd | T5 | 전설 | heavy | 10.0 | halberd_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| dual_dagger_iron | 철 쌍단검 | dual_dagger | T1 | 일반 | balanced | 3.37 | - | 상점(기본) | tradable |
-| dual_dagger_bronze | 청동 쌍단검 | dual_dagger | T1 | 일반 | heavy | 4.0 | - | 상점(기본) | tradable |
+| dual_dagger_wood | 목제 쌍단검 | dual_dagger | T0 | 시작 | balanced | 3.37 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| dual_dagger_iron | 철 쌍단검 | dual_dagger | T1 | 일반 | balanced | 3.37 | dual_dagger_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| dual_dagger_bronze | 청동 쌍단검 | dual_dagger | T1 | 일반 | heavy | 4.0 | dual_dagger_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | dual_dagger_steel | 강철 쌍단검 | dual_dagger | T2 | 고급 | swift | 2.84 | dual_dagger_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | dual_dagger_silver | 은 쌍단검 | dual_dagger | T2 | 고급 | heavy | 4.0 | dual_dagger_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | dual_dagger_flame | 불꽃 쌍단검 | dual_dagger | T3 | 희귀 | heavy | 4.0 | dual_dagger_steel | 강철에서 진화(분기 A) | tradable |
@@ -291,8 +304,9 @@
 | dual_dagger_divine | 신성 쌍단검 | dual_dagger | T5 | 전설 | balanced | 3.37 | dual_dagger_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dual_dagger_plague | 역병 쌍단검 | dual_dagger | T5 | 전설 | heavy | 4.0 | dual_dagger_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dual_dagger_abyss | 심연 쌍단검 | dual_dagger | T5 | 전설 | swift | 2.84 | dual_dagger_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| dual_axe_iron | 철 쌍도끼 | dual_axe | T1 | 일반 | balanced | 7.94 | - | 상점(기본) | tradable |
-| dual_axe_bronze | 청동 쌍도끼 | dual_axe | T1 | 일반 | heavy | 8.97 | - | 상점(기본) | tradable |
+| dual_axe_wood | 목제 쌍도끼 | dual_axe | T0 | 시작 | swift | 7.06 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| dual_axe_iron | 철 쌍도끼 | dual_axe | T1 | 일반 | balanced | 7.94 | dual_axe_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| dual_axe_bronze | 청동 쌍도끼 | dual_axe | T1 | 일반 | heavy | 8.97 | dual_axe_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | dual_axe_steel | 강철 쌍도끼 | dual_axe | T2 | 고급 | balanced | 7.94 | dual_axe_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | dual_axe_silver | 은 쌍도끼 | dual_axe | T2 | 고급 | swift | 7.06 | dual_axe_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | dual_axe_flame | 불꽃 쌍도끼 | dual_axe | T3 | 희귀 | heavy | 8.97 | dual_axe_steel | 강철에서 진화(분기 A) | tradable |
@@ -313,8 +327,9 @@
 | dual_axe_divine | 신성 쌍도끼 | dual_axe | T5 | 전설 | balanced | 7.94 | dual_axe_heaven | 천상에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dual_axe_plague | 역병 쌍도끼 | dual_axe | T5 | 전설 | heavy | 8.97 | dual_axe_corrosion | 부식에서 진화(최상급 보스 재료) | bind_on_acquire |
 | dual_axe_abyss | 심연 쌍도끼 | dual_axe | T5 | 전설 | swift | 7.06 | dual_axe_dark | 암흑에서 진화(최상급 보스 재료) | bind_on_acquire |
-| war_scythe_iron | 철 대낫 | war_scythe | T1 | 일반 | balanced | 8.2 | - | 상점(기본) | tradable |
-| war_scythe_bronze | 청동 대낫 | war_scythe | T1 | 일반 | heavy | 9.44 | - | 상점(기본) | tradable |
+| war_scythe_wood | 목제 대낫 | war_scythe | T0 | 시작 | balanced | 8.2 | - | 시작 무기 선택(최초 접속 1회, starter.json 후보 중 1개) | bind_on_acquire |
+| war_scythe_iron | 철 대낫 | war_scythe | T1 | 일반 | balanced | 8.2 | war_scythe_wood | 상점(기본) 또는 목제에서 진화 | tradable |
+| war_scythe_bronze | 청동 대낫 | war_scythe | T1 | 일반 | heavy | 9.44 | war_scythe_wood | 상점(기본) 또는 목제에서 진화 | tradable |
 | war_scythe_steel | 강철 대낫 | war_scythe | T2 | 고급 | swift | 7.33 | war_scythe_iron | 상점(직업 레벨/도감 조건) 또는 철에서 진화 | tradable |
 | war_scythe_silver | 은 대낫 | war_scythe | T2 | 고급 | swift | 7.33 | war_scythe_bronze | 상점(직업 레벨/도감 조건) 또는 청동에서 진화 | tradable |
 | war_scythe_flame | 불꽃 대낫 | war_scythe | T3 | 희귀 | heavy | 9.44 | war_scythe_steel | 강철에서 진화(분기 A) | tradable |
