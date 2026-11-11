@@ -1,7 +1,7 @@
 # Minecraft 1.21.1 NeoForge 경제·장비강화 서버 — 개발 명세서
 
-> **문서 버전:** v0.1 + 9.3 개정(2026-11-11, 가구 뽑기 등급 폐지·균등 풀) / **작성 기준:** 2026-11-10  
-> **개정 이력:** 9.3 가구 뽑기를 **등급 없는 균등 풀 + 선택 천장 + 조각 교환**으로 개정했다(관련: 9.2, 14.1, 14.3, 16, 17.1, 19장). 근거는 G3 `Gacha_Flat` 시뮬레이션이다. 이 파일은 업로드된 원본의 **초안 사본**이며 다른 장(요리 판정 폐지, 장비·전투 구조 등)은 아직 반영되지 않았다.
+> **문서 버전:** v0.2 초안(2026-11-11, v0.1에 기획 논의 결정 사항 반영) / **원본 작성 기준:** 2026-11-10  
+> **개정 이력(v0.2, 2026-11-11):** 기획 논의에서 확정·제안한 변경을 반영했다. ① 가구 뽑기 **등급 폐지·균등 풀**(9.3) ② 요리 **타이밍 판정 폐지 → 조리 시간·플레이어 쿨타임·결정적 품질**(5.3) ③ **서버 코어 모드** 도입(2.1·3·15) ④ 자체 검 강화 모드 **폐기 → 신규 아이템·서버 권위 범위 공격·`GearBridge` 재정의**(1.1·6.1) ⑤ 무기 **아키타입 15종·카탈로그 361종·시작 무기 선택**(4.3·6.1) ⑥ **이펙트 우선·특수 효과**(6.1) ⑦ 치장·소셜(6.4·6.5) ⑧ TaCZ·LR **공식 1.21.1 빌드와 라이선스**(2.2·10) ⑨ **G3 경제 시뮬레이션 기준값**(7.5·18). 각 변경의 근거 문서는 해당 절에 `docs/…`로 표시한다. 이 파일은 업로드된 원본의 **초안 사본**이다.
 > **상태:** 기획 통합 초안(개발용). 개발 착수 전에 `미확정`으로 표시한 규칙 및 모드 조합을 실기동 검증할 것.  
 > **핵심:** 장비 강화가 메인 콘텐츠이고, 생활 직업은 재화와 재료를 공급한다. 수집·보스·주거·가구 뽑기·거래·시장경제가 재화 소비 및 순환을 만든다.
 
@@ -15,6 +15,7 @@
 - **[승계]** 이전 서버 논의에서 계속 가져오는 사항. 현재 플랫폼/범위에 맞추어 재검토 필요.
 - **[제안]** 구현을 구체화하기 위해 추가한 규칙·수치. 운영자가 조정 또는 확정해야 함.
 - **[검증]** 모드 배포판 존재는 확인했지만 *함께 실행되는지, 상호작용이 요구대로 작동하는지*는 아직 테스트되지 않은 사항.
+- **[v0.2]** 2026-11-11 기획 논의에서 추가·변경된 사항. 근거 문서(`docs/…`)를 절마다 표시한다.
 
 `Coin`은 게임 내 **비현금성** 기본 재화다. 실제 현금·유료 확률형 아이템 및 현금 환전은 본 기획 범위에 포함하지 않는다.
 
@@ -28,10 +29,14 @@
 - **[확정 기획]** 장비는 상점/보상/전문 시스템에서 공급되며 일반적인 조합·모루·인챈트 테이블 사용을 제한한다. **요리사의 전용 요리 제작만 예외**로 허용한다.
 - **[확정 기획]** 장비 내구도는 무한. 강화 실패 시 저확률 파괴.
 - **[확정 기획]** 가구 설치·주택 꾸미기·**가구 뽑기 시스템**은 정식 경제 콘텐츠에 포함한다.
+- **[v0.2]** 근접 무기는 `economycore`가 등록한 **신규 아이템**과 **서버 권위 범위 공격**으로 구현하고, 기존 자체 검 강화 모드는 폐기한다(6.1장, `docs/combat-spec.md`, `docs/gearbridge-spec.md`).
+- **[v0.2]** 무기는 아키타입 15종 × 티어 6단계(목제~전설) **후보 361종 카탈로그에서 선별**해 채택한다. 시작 무기는 최초 접속 시 목제 무기 중 1개를 고른다(4.3장, `docs/weapon-archetypes-spec.md`, `docs/weapon-catalog.md`, `docs/starter-weapon-spec.md`).
+- **[v0.2]** 연출(이펙트)을 먼저 구현하고 모션 제작은 선택 사항으로 둔다. 고등급 강화 무기는 서버 권위 특수 효과를 갖는다(`docs/fx-spec.md`, `docs/special-effects-spec.md`).
+- **[v0.2]** 이 서버는 **현금 과금이 없다**(Coin만 사용). 확률형 요소는 법적 쟁점이 아니라 운영·밸런스 문제로 다룬다.
 
 ### 1.2 플레이어 루프
 
-`최초 접속 → 닉네임 지정 → 직업 선택 → 직업 활동 → 생산물 판매/유저 납품 → Coin 획득 → 장비/강화석/인챈트/탄약 구매 → 강화 → 도감·칭호 진행 → 보스 도전 → 상급 재료 획득 → 더 높은 강화`.
+`최초 접속 → 닉네임 지정 → 직업 선택 → 시작 무기 선택(목제 6종 중 1) → 직업 활동 → 생산물 판매/유저 납품 → Coin 획득 → 장비/강화석/인챈트/탄약 구매 → 강화 → 도감·칭호 진행 → 보스 도전 → 상급 재료 획득 → 더 높은 강화`.
 
 병행 루프: `Coin 수입 → 주택/농지 확보 → 가구 상점·가구 뽑기 → 집 꾸미기 → 전시/방문/거래 → 가구 회수·중복 조각 교환 → 주택 확장/유지 비용`.
 
@@ -40,11 +45,12 @@
 ### 1.3 설계 원칙
 
 1. 직업은 **경제적 특화**이지 전투 클래스가 아니다. 검 강화·보스 진입을 직업으로 막지 않는다.
-2. **자체 제작 검 강화 모드의 내부 구현은 범위 밖**이다. 다른 시스템과 연동할 공개 인터페이스만 정의한다.
+2. **[v0.2]** 장비 시스템은 `economycore` 안의 **장비 계층**(`gear`·`combat`·`fx`)으로 직접 구현하고, 경제 서비스와는 `GearBridge` 인터페이스로만 연결한다(기존 자체 검 강화 모드는 폐기).
 3. 일반적인 사냥·생활·채집은 솔로 플레이 가능; 레이드형 보스에 한해 파티 이점 허용.
 4. 서버가 모든 거래·보상·확률·권한을 판정한다. 클라이언트 클릭은 **요청**일 뿐 결과를 결정하지 않는다.
 5. 데이터를 복구 가능하게 저장하고, 결제/아이템 증감은 **중복 실행 방지와 감사 로그**를 갖춘다.
 6. ‘모드가 1.21.1 NeoForge용으로 배포됨’과 ‘우리 서버 모드 조합에서 정상 동작함’은 별도 판단한다.
+7. **[v0.2]** 서드파티 모드는 **콘텐츠 공급자**이고, 제작 제한·내구도·복제 방지·피해 계산 같은 **통제는 코어 모드(`economycore`)가 담당**한다(`docs/server-core-mod-spec.md`).
 
 ## 2. 기술 기반 및 모드 구성
 
@@ -56,7 +62,7 @@
 | 로더 | NeoForge 1.21.1 대응 빌드 (정확한 패치 버전은 통합 테스트 후 고정) |
 | Java | Java 21 |
 | 서버 하드웨어 | 기존 구상: Ryzen 5 7500F / RAM 32 GB / SSD / 500 Mbps 회선. 실제 TPS 부하 테스트 후 JVM 메모리 할당 |
-| 전용 서버 모드 | `economycore`(가칭), 모듈별 패키지·서비스 분리 |
+| 전용 서버 모드 | `economycore`(가칭), 모듈별 패키지·서비스 분리. **서버 코어**(`guard`·`combat`·`fx`·`cooking`·`persistence`)와 **클라이언트 구성요소**(UI·HUD·이펙트 렌더)를 함께 제공한다(모드팩 일치가 접속 조건). 코어는 TaCZ/LR 코드에 직접 의존하지 않고 이벤트·데이터·명령으로 연동한다(라이선스 분리, 2.2장) |
 | 데이터베이스 | PostgreSQL 권장; 소규모 프로토타입은 SQLite WAL 가능(동시성·백업 기준 별도 검토) |
 | 동기화 | 중요 상태 서버 권위(authoritative), 클라이언트는 최소한의 표시 데이터만 수신 |
 | 번들/배포 | 서버와 클라이언트에 동일한 네오포지용 모드팩 배포, 잠금 파일로 버전 관리 |
@@ -67,10 +73,10 @@
 
 | 용도 | 후보 | 확인 내용 및 주의 | 채택 방향 |
 |---|---|---|---|
-| 요리 | [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) | 1.21.1 NeoForge 배포판 확인(예: 1.3.4); 전용 요리/식재료. 기본 제작 레시피 제거·요리사 제한은 별도 작업 | **필수** |
-| 낚시 | [Aquaculture 2](https://www.curseforge.com/minecraft/mc-mods/aquaculture/files/all?version=1.21.1) | 1.21.1 NeoForge용 `2.7.22` 파일(2026-11-03) 확인 | **필수** |
-| 총기 | [TaCZ 1.21.1 비공식 NeoForge 포트](https://modrinth.com/mod/tacz-1.21.1) | **비공식 포트**. 구버전 월드/아이템 데이터 비호환 경고, 팩 업그레이드 필요할 수 있음 | **필수·리스크 높음** |
-| 총기 확장 | [LesRaisins Tactical Equipements(LR) 비공식 1.21.1 포트](https://modrinth.com/mod/lr-tactical-1.21.1) | TaCZ 의존. TaCZ 버전/건팩/탄약 호환 및 네트워크 테스트 필수 | **필수·리스크 높음** |
+| 요리 | [Farmer's Delight](https://www.curseforge.com/minecraft/mc-mods/farmers-delight) / [Kaleidoscope Cookery](https://modrinth.com/mod/kaleidoscope-cookery)(+[Kaledelights Compat](https://www.curseforge.com/minecraft/mc-mods/kaledelights-compat)) | FD: 1.21.1 NeoForge 배포판 확인(1.2.8·1.3.1 등), 코드 MIT. Kaleidoscope Cookery: 1.21.1 NeoForge 빌드 확인, CC BY-NC-SA 4.0. Compat 모드의 1.21.1 빌드는 **미확인**. 기본 제작 레시피 제거·요리사 제한은 코어 `guard.recipe`가 담당 | **G1에서 비교 결정**(FD 단독 / KC 단독 / 병행) |
+| 낚시 | [Aquaculture 2](https://www.curseforge.com/minecraft/mc-mods/aquaculture/files/all?version=1.21.1) | 1.21.1 NeoForge용 `2.7.22` 파일(2026-11-03) 확인. 라이선스 **All Rights Reserved**(모드팩 포함은 출처 표기·링크 조건, 수정·디컴파일·아트 재사용 금지) | **필수** |
+| 총기 | [TaCZ 공식(GitHub)](https://github.com/MCModderAnchor/TACZ) | **공식 1.21.1 NeoForge 지원**(1.x LTS 최신 1.2.0, 2.x는 개발 중·빌드 없음). 코드 GPL-3.0, **에셋 CC BY-NC-ND 4.0(수정·재배포 금지)** | **필수** |
+| 총기 확장 | [LR Tactical 공식(GitHub)](https://github.com/LesRaisins-Studios/LesRaisins-Tactical-Equipements) | **공식 `1.21.1` 브랜치**(NeoForge, Java 21), TaCZ 1.2.0 의존. 코드 GPL-3.0, **아트 에셋 All Rights Reserved**. 투척물·소모품·근접 무기 확장을 제공하나 이 서버의 근접 무기는 자체 구현(6.1장), LR 근접은 이식 평가 대상 | **필수(총기 확장 요소)** |
 | 가구 1 | [Another Furniture](https://www.curseforge.com/minecraft/mc-mods/another-furniture) | NeoForge 1.21.1 `4.0.2` 확인. 비교적 소박한 바닐라풍 가구 | **1차 가구 후보** |
 | 가구 2 | [Handcrafted](https://www.curseforge.com/minecraft/mc-mods/handcrafted) | NeoForge 1.21.1 `4.0.3` 확인. 장식 다양성 확대 | **추가 후보** |
 | 가구 3 | [MrCrayfish's Furniture Mod: Refurbished](https://www.curseforge.com/minecraft/mc-mods/refurbished-furniture/files/all?version=1.21.1) | NeoForge 1.21.1 `1.0.22` 확인. 기능성 가구 포함 가능, [Framework](https://www.curseforge.com/minecraft/mc-mods/framework) 의존 검토 | **선택 후보** |
@@ -80,6 +86,24 @@
 | 보스 후보 | [L_Ender's Cataclysm](https://modrinth.com/mod/l_enders-cataclysm) | 1.21.1 NeoForge 지원. 의존성 및 장비 드롭·기본 스폰 제한 필요 | **보스 후보** |
 | 바이옴 후보 | [Regions Unexplored](https://www.curseforge.com/minecraft/mc-mods/regions-unexplored) | 1.21.1 NeoForge 배포판 확인. 광산 콘텐츠와 필요성 비교 | **보류** |
 
+**[v0.2] 라이선스·배포 조건 요약** (웹·저장소 조사, 원문 전체는 미확인 — 채택 전 각 `LICENSE` 확인 필수, `docs/mod-license-survey.md`)
+
+| 모드 | 코드 | 에셋 / 배포 조건 |
+|---|---|---|
+| TaCZ(공식) | GPL-3.0 | 에셋 CC BY-NC-ND 4.0: 수정물 배포 금지, 표시·비영리 |
+| LR Tactical(공식) | GPL-3.0 | 아트 에셋 ARR: 수정·재배포는 저작자 허락 필요 |
+| Farmer's Delight | MIT | 에셋 표기 미확인 |
+| Kaleidoscope Cookery | CC BY-NC-SA 4.0 | 수정물에 동일조건 적용 |
+| Aquaculture 2 | ARR | 모드팩 포함은 표기·링크 조건 |
+| Another Furniture / Handcrafted | 커스텀 | 모드팩 포함은 표기 조건, 전문 확인 필요 |
+| Refurbished / Framework | 코드 MIT(Refurbished) | 에셋 권리 유보(Refurbished), Framework 미확인 |
+| Cataclysm | CC BY-NC-ND 4.0 | 수정물 배포 금지 |
+| FTB Chunks | ARR(FTB 정책) | 무수정 사용 |
+
+- **운영 방침:** 에셋을 수정할 가능성이 있는 모드는 TaCZ·LR뿐이고 둘 다 수정물 배포가 불가하므로, 수정·신규가 필요한 모델·모션은 **자체 제작 에셋**으로 만든다(허락을 받으면 예외). 나머지는 무수정 사용(설정·데이터팩·이벤트 연동만).
+- GPL 코드는 클라이언트에 jar를 배포하면 **소스 제공 의무**가 따른다. 코어 모드(`economycore`)는 TaCZ/LR 코드에 직접 의존하지 않게 설계한다.
+- 현금 과금이 없으므로 NC 조건은 유지되며, 후원·광고·판매가 생기면 전 모드의 라이선스를 재검토한다.
+
 **권고 가구 조합:** 출시 초기에는 **Another Furniture 1종**을 고정하고, 가구 가짓수가 부족하면 **Handcrafted**를 추가한다. **Refurbished**는 기능성 블록(저장/기계 등)을 제한하지 않으면 경제 우회로가 생기므로 별도 검증 후 도입한다. 모든 모드를 무조건 한꺼번에 넣지 않는다.
 
 **추가 광물:** 특정 외부 광물 모드의 무조건적 채택보다 **자체 광산 월드의 광석 블록·전리품 테이블·레벨 게이트를 우선 구현**한다. 별도 광물 모드를 도입할 때는 **1.21.1 NeoForge 파일·광석 ID·월드 생성 규칙·중복 광석·강화 재료 변환 방식** 검증 뒤 채택한다. 현재 명세의 ‘추가 광물’은 **필수 기능**이지만 특정 서드파티 모드가 확정된 것은 아니다.
@@ -87,19 +111,20 @@
 ### 2.3 모드 채택 승인 체크리스트
 
 1. 정확한 MC/NeoForge/Java 버전 일치 및 라이브러리 의존성 충족.
-2. 라이선스상 모드팩 배포·수정·에셋 이용 조건 확인(특히 비공식 포트/가구 모델).
+2. 라이선스상 모드팩 배포·수정·에셋 이용 조건 확인(특히 TaCZ·LR 에셋, 가구 모델).
 3. 클라이언트 2개 이상 + 전용 서버 기동, 접속·설치·상호작용 테스트.
 4. 기본 제작법 차단 후 우회 제작/타 모드 작업대/명령어 생성·아이템 복제 가능성 확인.
 5. 서버 TPS, 엔티티/청크/스프링클러/가구 렌더링 비용 측정.
 6. 모드 업그레이드와 월드 롤백 테스트 및 **버전 고정**.
+7. **[v0.2]** 코드/에셋 라이선스 구분, 클라이언트 배포 시 소스 제공(GPL), ND·ARR 에셋의 수정·재배포 금지 준수 확인(`docs/G1-mod-verification-checklist.md` 3.1).
 
 ## 3. 게임 규칙 및 제한 시스템
 
 ### 3.1 일반 제작·장비 수리 제한 [확정 기획]
 
 - 플레이어 **2×2 인벤토리 제작**, **3×3 작업대**, 모루, 마법 부여대, 대장장이 작업대, 숫돌의 **장비 제작/수리/인챈트 결과 획득**을 차단한다.
-- 단순히 블록 클릭만 막지 말 것. **레시피 데이터 제거 + 작업 화면 결과 검증 + 자동화/타 모드 작업대 우회 검증**의 다층 방어 필요.
-- 요리사는 전용 `CookingStation`에서만 승인된 요리를 제작한다. Farmer's Delight의 기본 제작 경로는 직업 권한/서버 레시피 화이트리스트에 맞춰 재배치.
+- 단순히 블록 클릭만 막지 말 것. **레시피 데이터 제거 + 작업 화면 결과 검증 + 자동화/타 모드 작업대 우회 검증**의 다층 방어 필요. **[v0.2] 코어 모드가 담당**한다: `guard.recipe`(레시피 로드·리로드 시 화이트리스트 필터, 기본 거부), `guard.craft`(결과 슬롯 수령 시점 서버 재검증), `guard.command`(일반 유저의 아이템 생성 명령·크리에이티브 차단).
+- 요리사는 전용 `CookingStation`에서만 승인된 요리를 제작한다. 요리 모드의 기본 제작 경로는 직업 권한/서버 레시피 화이트리스트에 맞춰 재배치(조리 제어 방식은 5.3장).
 - 채광 원석→재료 전환, 씨앗 구매 등은 전용 상점 또는 직업 작업대(승인 레시피만)로 처리한다.
 - 일반 생존용 블록 설치, 침대·상자 사용 등을 어디까지 허용할지는 **설정값과 화이트리스트**로 관리한다. ‘조합 금지’와 ‘건축 금지’를 혼동하지 않는다.
 - 기본 인챈트/수리/거래 우회(주민 거래, 몹 장비 드롭 등)는 획득 허용 정책에 통일한다.
@@ -109,6 +134,7 @@
 - 서버가 인가한 검·곡괭이·괭이·낚싯대·식칼·방어구·기타 장비는 **사용 시 내구도 감소 없음**. 필요 시 원래 모드가 요구하는 내구도 이벤트를 어댑터에서 차단한다.
 - **수분/충전량, 탄약, 일회용 소모품**은 내구도와 다른 리소스다. 무한 내구도가 무한 탄약/물/재료가 되지 않게 구분한다.
 - 고장(내구도 0) 대신 **강화 실패 시 파괴**만 장비 소멸 원인으로 삼는다(사망 드롭과 운영자 회수는 별도 정책).
+- **[v0.2]** 코어가 발급하는 장비에는 `unbreakable` 컴포넌트를 부여하고 `guard.durability`가 내구도 감소 호출을 차단한다. 자체 근접 무기(`combat`)에는 내구도 소모 개념이 없다(`docs/server-core-mod-spec.md` 2.3).
 
 ### 3.3 사용자 인터페이스 [승계 + 제안]
 
@@ -116,6 +142,7 @@
 - HUD: 작은 상태 바(직업/직업 XP/재화/수배 상태), 우측 축소형 상태창(온라인 인원·서버 시계); **크리에이티브에서는 숨김**.
 - 운영자 메뉴: `/관리자` → 칭호·경제·상점·재고·범죄 로그·토지·보스·확률 설정·서버 공지.
 - UI를 클라이언트에서만 가리고 서버 검증이 빠지는 방식은 금지.
+- **[v0.2]** 화면 구성은 `docs/g5-wireframes.md`·`docs/g5-wireframes-2.md`(약 50개 화면)를 기준으로 한다. 공격 쿨다운은 **서버 쿨다운을 시각화**해 표시하고(바닐라 쿨다운 대체), 모든 확정 요청은 `request_id`로 멱등 처리한다. UI 구현 방식(서버 메뉴 vs 커스텀 화면+패킷)은 미확정.
 
 ## 4. 계정·닉네임·직업 진입
 
@@ -134,6 +161,13 @@
 - 직업 도구 지급 시 **소유자 UUID/직업/단계** 기록. 도구 복제·무제한 재지급 차단.
 - 직업 도구의 강화는 **전투 검 강화와 분리**. 직업 도구는 일반 강화 도감에 넣지 않는다.
 - 기존 ‘일반 XP 폐기→직업 XP 통합’ 방향 승계. 바닐라 XP가 인챈트 우회·보상 중복에 사용되지 않도록 통일.
+
+### 4.3 시작 무기 선택 [v0.2 결정] (`docs/starter-weapon-spec.md`)
+
+- **흐름:** 최초 접속 → 닉네임 → 직업 → **시작 무기 선택** → 지급. UI를 닫아도 재접속 시 이어서 진행.
+- **후보:** 입문 친화적인 6종(한손검·단검·쌍검·대검·창·도끼)의 **목제(T0) 무기**. 선택 전 연습장(허수아비)에서 임시 대여 무기로 체험할 수 있으며 체험 결과는 경제·보상·랭킹에 반영하지 않는다.
+- **규칙(제안):** 계정당 1회 선택, **획득 시 귀속**(거래 불가), 선택 후 24시간 안에 1회 무료 교체(이전 `serial`은 파괴 처리), 목제 → 철/청동으로 분기 진화. 나머지 9개 아키타입은 상점·진화로 해금.
+- **서버 처리:** `starter_claims`로 1회 발급을 보장하고(`request_id` 멱등), 인벤토리 가득·서버 종료에도 1회 발급 ↔ 1개 지급. 시작 무기는 무료이며 Coin 발행 경로가 아니다.
 
 ## 5. 네 가지 직업 상세
 
@@ -171,13 +205,14 @@
 
 ### 5.3 요리사 [확정 기획]
 
-**핵심 루프:** 요리사 전직 → 전용 식칼 지급 → 재료 구매/유저 납품 수령 → 전용 프라이팬/조리대 사용 → 타이밍 판정 → 음식 판매·의뢰 납품.
+**핵심 루프:** 요리사 전직 → 전용 식칼 지급 → 재료 구매/유저 납품 수령 → 전용 프라이팬/조리대 사용 → 조리 시간·쿨타임 → 음식 판매·의뢰 납품.
 
-- **Farmer's Delight 필수**. 기본 제작대 우회는 불허하고 **요리사 전용 조리 UI** 및 레시피 화이트리스트로 연결한다.
-- 직업 레벨별 요리 레시피 해금. 요리 레시피는 `필요 레벨/입력 재료/수량/소요 시간/판정 수/결과물/판매 단가`로 데이터화.
-- 타이밍 판정 예: 화면의 커서가 유효 구간을 통과할 때 우클릭. `Perfect / Good / Fail`을 판정하되 네트워크 지연에 대한 허용 오차와 **서버가 만든 타임스탬프** 검증을 포함한다.
+- 요리 모드는 **G1에서 비교 결정**한다(Farmer's Delight 단독 / Kaleidoscope Cookery 단독 / 병행, 2.2장). 기본 제작대 우회는 불허하고 **요리사 전용 조리 흐름** 및 레시피 화이트리스트로 연결한다.
+- 직업 레벨별 요리 레시피 해금. 요리 레시피는 `필요 레벨/입력 재료/수량/조리 시간/쿨타임/결과물/판매 단가`로 데이터화.
+- **[v0.2 결정] 타이밍 판정(Perfect/Good/Fail)은 폐지**한다. 대신 레시피별 **조리 시간**과 **플레이어 단위 쿨타임**(플레이어마다 `cooldown_until` 하나, 시작 시점 기준 [제안])으로 속도를 제어한다. 모든 시간은 서버 시간이며 클라이언트 입력은 시작/수령 요청일 뿐이다.
 - 실제 재료 소비는 제작 시작/완료 흐름에서 **한 번** 처리한다. 창 닫기·서버 충돌·재접속 시 복제나 재료 손실이 없도록 작업 트랜잭션 저장.
-- 품질은 **판매 가치·경험치·사소한 음식 효과**에 영향. 실패해도 일부 재료가 돌아오거나 저품질 음식을 생성하는 완화책(제안).
+- **[v0.2 결정] 품질은 결정적 보정(B안)**: `quality_tier = tier_of(min(직업 레벨 구간, 도구 티어 캡))`로 판매가·경험치·음식 효과 배수를 정한다(무작위 없음, 실패 개념 없음). 등급 수·배수는 설정값이며 G3에서 확정한다.
+- **[v0.2] 조리 제어 방식(D-005):** 코어가 `CookJob`(시작→진행→수령, 재료 1회 차감, 작업 DB 저장)으로 통제하면서도 서드파티 블록의 연출을 재사용할 수 있으면 **코어 제어(모드 B)**, 불가능하면 **서드파티 블록 방식(모드 A)** + 최소 방어층(레시피 필터·수령 시점 직업/쿨타임/품질 검증·자동화 입력 차단)을 쓴다(`docs/server-core-mod-spec.md` 3장).
 - 직업용 식칼/프라이팬 강화는 직업 장비 시스템에 속한다. 프라이팬으로 전투 검을 대체할 수 없음(전투 수치 분리).
 
 ### 5.4 어부 [확정 기획]
@@ -189,6 +224,7 @@
 - 어종별 난이도·레벨 제한·보상·판매 기준가·수요를 별도 데이터로 정의.
 - 어부 레벨은 상위 어장/미끼/낚싯대 접근과 희귀 어획 확률에 영향. 희귀어 무한 리스폰/무제한 판매로 유통량이 폭증하지 않도록 어종별 공급 계수 적용.
 - 수확물은 상점에 판매하거나 요리사 의뢰와 연결할 수 있도록 식재료 태그 매핑.
+- **[v0.2]** 요리 판정 폐지와 별개로 **낚시 타이밍 판정은 유지**한다. 접근성: 시각·소리 신호, 시간창 완화 옵션, 대체 입력 키.
 
 ### 5.5 공통 직업 성장 수치 [제안·설정 가능]
 
@@ -199,24 +235,44 @@
 
 ## 6. 장비 강화·인챈트·도감
 
-### 6.1 강화 연동 [확정 기획 / 자체 제작 검 모드 존중]
+### 6.1 장비 계층과 `GearBridge` [확정 기획 / v0.2 개정]
 
-검 강화 모드 내부 전투·진화·스킬 로직은 **다시 개발하지 않는다**. 이 프로젝트는 다음 공통 연동 규약만 필요하다.
+기존 자체 제작 검 강화 모드는 **폐기**한다. 장비는 `economycore` 안의 **장비 계층**(`gear`·`combat`·`fx`)으로 구현하고, 경제 서비스(확률·비용·재화)와는 `GearBridge`로만 연결한다(`docs/gearbridge-spec.md`).
+
+- **식별:** 종류 키 `gear_key = (item_id, def_id)`, 개별 키 `serial`(코어 `guard.identity`, 컴포넌트 `economycore:identity`·`economycore:gear`). **정본은 DB**이고 스택 컴포넌트는 캐시다(불일치 시 DB 기준 복구).
+- **아이템:** 카테고리별 신규 아이템(`economycore:gear_sword`·`gear_polearm`·`gear_axe`). 무기 종류는 `def_id`(데이터)이며 코드 없이 추가한다.
+- **백엔드:** **바닐라 백엔드(신규 아이템 + 자체 서버 권위 범위 공격)를 먼저 구현**하고, 가능하면 LR 근접 체계로 이식한다(FX5 평가). GearBridge는 `GearBackend`로 추상화한다.
 
 ```text
-GearBridge.getItemIdentity(stack) -> {gear_id, serial_id, category, tier, enhance_level}
-GearBridge.canEnhance(player, stack, context)
-GearBridge.onEnhanceAttempt(event_id, player_uuid, gear_serial, cost)
-GearBridge.onEnhanceResult(event_id, result: SUCCESS|FAIL_KEEP|DESTROY, new_state)
-GearBridge.onGearEvolved(event_id, old_gear_id, new_gear_id)
-GearBridge.onSkillUsed(event_id, skill_id, context) [선택]
+GearBridge.identify(stack) / locate(player, serial)
+GearBridge.canEnhance(player, stack, ctx) -> {ok, reason, preview{rates_version, cost, rates}}
+GearBridge.beginEnhance(event_id, player_uuid, serial, cost)
+GearBridge.commitEnhance(event_id, result: SUCCESS|FAIL_KEEP|DESTROY, new_state) / abortEnhance(event_id, reason)
+GearBridge.evolve(event_id, serial, to_def_id, cost)
+GearBridge.applyStats(stack) / issue(def_id, owner, source_event_id)
+발행 이벤트: GearEnhanced, GearEnhanceFailed, GearDestroyed, GearEvolved, CollectionUnlocked   (입력: ValidatedMeleeHit)
 ```
 
-- **강화석·Coin 소비**, 성공·실패·파괴 결과, 경제 원장·도감 자동 등록·칭호 갱신을 하나의 이벤트 흐름으로 연결.
-- 강화 중 장비 이동·복제·동시 클릭 방지: `gear_serial` 잠금, `event_id` 멱등성 확인, 결과 저장 후 UI 동기화.
-- 기존 `강화 성공 시 도감 자동 등록`, `강화자 표시`, `진화 트리` 계획 승계. 성공·획득·진화 기록을 분리 저장.
-- 인챈트는 **전용 상점/강화 UI에서 비용을 내고 부여하는 별도 서비스**. 마법 부여대 금지. 종류·레벨·중복 제한·제거·교체비·직업별 사용 제한은 데이터화.
-- 직업 장비는 **장비 수집 도감 제외**. 검·방어구·활 등 직업 외 강화 가능한 장비는 도감 포함을 원칙으로 하되, 출시 범위를 분명히 한다.
+- **강화 트랜잭션:** `reserve → resolve → apply`. `serial` 잠금, `request_id` 멱등, 서버 RNG, `rates_version` 기록, DB 커밋 후 스택 적용은 **outbox**로 정확히 1회(적용 실패 시 보관함에 정본 상태로 재발급). 강화석·Coin 소비, 결과, 원장, 도감, 칭호를 하나의 이벤트 흐름으로 연결.
+- **스탯:** `base_damage(def, tier, level) = def.base_damage × tier_multiplier[tier] × (1 + k × level)` (k = 0.06 [제안]). 공격자 속성에 의존하지 않고 서버가 직접 계산한다. 강화는 **공격력만** 바꾸고 쿨다운·히트박스·사거리는 티어(진화)에서만 바뀐다.
+- **인챈트:** 마법 부여대 금지, **전용 서비스**에서 비용을 내고 부여(바닐라 인챈트 컴포넌트 사용, 종류·레벨·중복 제한·제거·교체비·직업별 제한은 데이터).
+- **진화:** `def_id` 교체(`serial` 유지). 강화 단계는 `carry_over_ratio`(기본 0.5, 내림)만큼 이월 [제안]. 진화 트리는 분기 최대 2, 노드 깊이 3~4단계(시작 단계 포함 T0→T5).
+- **귀속:** 일반·희귀 장비(T1~T3)는 거래 가능(시리얼 유지, 수수료 소각), 영웅 이상(T4~T5)·진화 최종형·보스 재료 장비는 획득 시 귀속 [제안].
+- **직업 장비는 도감 제외**. 검(근접 무기)을 1차 도감 대상으로 하고 방어구·활·기타는 확장 범위.
+
+#### 6.1.1 근접 전투 `combat` [v0.2] (`docs/combat-spec.md`)
+
+- **서버 권위:** 클라이언트는 공격 **의도**(`C2SAttackIntent`)만 보내고, 서버가 쿨다운·콤보·대상 선정(원뿔/OBB/부채꼴 + 시선 차폐 검사)·피해·넉백을 계산한다. LR 방식의 클라이언트 대상 선정 신뢰 문제가 구조적으로 사라진다.
+- **피해:** 바닐라 피해 경로를 사용해 방어구·인챈트·피해 이벤트와 호환. 크리티컬은 바닐라 점프 크리티컬 조건(×1.5, 도끼 1.8), 힘 효과 등 바닐라 보정은 기본 미적용. 이 아이템을 든 상태의 바닐라 공격·휩쓸기·블록 채굴은 차단.
+- **PvP는 기본 끔**(지정 아레나·이벤트 구역에서만 허용 [제안]).
+- **아키타입 15종:** 한손검·단검·쌍검·대검·창·도끼·레이피어·곡도·카타나·해머·메이스·할버드·쌍단검·쌍도끼·대낫(전투용). **같은 티어에서 단일 대상 지속 DPS를 비슷하게**(일반 9.7 ±5%, 광역 -10%) 맞추고 차이는 사거리·광역·기동·유틸·연출에서 만든다(`docs/weapon-archetypes-spec.md`).
+- **쌍검(양손) 방식 A:** 쌍검 1세트 = 아이템 1개(`serial` 1개), 콤보가 좌·우 손을 번갈아 공격, 쌍검을 든 동안 오프핸드 사용을 서버가 차단(`hands: 2`).
+- **카탈로그:** 아키타입 15 × 테마 23 + 고유 16 = **후보 361종**을 생성·DPS 검증하고(`docs/weapon-catalog.md`) **채택할 것만 선별**한다. 전설 후보가 많으므로 아키타입당 1~2개와 고유 무기 위주로 채택하길 권한다.
+
+#### 6.1.2 이펙트·특수 효과 [v0.2] (`docs/fx-spec.md`, `docs/special-effects-spec.md`)
+
+- **이펙트(`fx`):** 서버 권위 트리거(`GearActionEvent`: 휘두르기·타격·치명타·처치·강화·진화)로 파티클·소리를 서버가 전송하고, 화면 흔들림·궤적 리본 등 클라이언트 효과는 2단계로 둔다. 정의는 JSON+핫리로드, 파티클·소리 예산과 상세도 옵션(접근성)을 둔다. 모든 에셋은 자체 제작 또는 허락받은 것만 사용한다.
+- **특수 효과(게임플레이):** 강화 단계가 해금한다(T3 +10에 1개, T4 +10·+15에 2개, T5 +5·+10·+15에 3개 + +20 각성). 서버 RNG·내부 쿨다운·효과 연쇄 금지·보스 감쇠를 적용하고 **효과 기대 DPS는 기본의 15% 이내**로 제한한다(`Effect_Packs` 시트: 전설 최대 14.3%). 테마 효과 팩 6종(불꽃·서리·번개·성광·맹독·그림자).
 
 ### 6.2 강화 위험 관리 [제안]
 
@@ -224,6 +280,8 @@ GearBridge.onSkillUsed(event_id, skill_id, context) [선택]
 - 성공률/실패율/파괴율 합은 각 단계별 100%. 동일 장비에 동시 강화 요청이 들어오면 단일 결과만 생성.
 - 파괴 시 아이템 소멸, 인챈트 등 부속 정보 처리, 도감 보유 기록 유지 여부를 명시: **제안: 도감 업적은 유지**, 실물 보유는 사라짐.
 - 확률 변경 시 `rates_version`을 기록하여 사후 감사 가능하게 구성.
+- **[v0.2·제안] 파괴 완화 장치(G3 `Enhance_Mitigation` 비교 결과):** 장비를 잃는 손실감을 실제로 줄이는 것은 **보호권**(파괴를 유지로 전환하는 소모품)뿐이다(+12에서 소멸 확률 46%→10%). 추천 조합: **안전 구간(8단계 미만 파괴 없음) + 보호권(10단계부터, 1,500 Coin 안팎) + 파괴 시 투입 강화비 30% 환급**. 환급·단계 하락·강화 천장 단독은 손실감을 줄이지 못한다. 채택 여부와 가격은 미확정(19장).
+- **[v0.2] 난수 시뮬레이션 기준:** 목표 단계 총비용의 **P90 ≤ 평균의 2배**, 목표 단계에서 장비를 한 번 이상 잃는 유저 비율 ≤ 30%를 점검한다(G3 `MonteCarlo`).
 
 ### 6.3 도감·보상 [확정 기획]
 
@@ -231,6 +289,7 @@ GearBridge.onSkillUsed(event_id, skill_id, context) [선택]
 - 범위별 장비 도감(검/방어구/활/기타), 수집률, 티어별 마일스톤, 완료 보상을 구현.
 - 마일스톤 보상: Coin 소량, 장식 아이템, 가구 뽑기권, 한정 칭호, 외형 이펙트 등. **직업별 경제 수익을 급격히 높이는 영구 버프는 지양**.
 - 이미 획득한 칭호를 장비 파괴 후에도 유지하도록 설계(획득 업적과 현재 착용 장비는 별개).
+- **[v0.2]** 도감 키는 `(gear_id, enhance_level, evolution_id)`. 진화 이월·귀속·진화 트리는 6.1장 규칙을 따르고, 도감 달성 보상은 서버가 1회만 지급(`reward_event_id`)한다.
 
 ### 6.4 칭호 [확정 기획]
 
@@ -238,6 +297,15 @@ GearBridge.onSkillUsed(event_id, skill_id, context) [선택]
 - 칭호는 접두/접미 표시 정책(기본 `[칭호] 닉네임`), 색상, 설명, 희귀도, 부여 이유, 획득일, 공개 여부를 갖는다.
 - 영구 삭제 시 부여 기록을 없애지 말고 비활성화 처리하여 감사 로그 유지.
 - 닉네임·칭호 충돌·Tab 표시길이·채팅 악용 색 코드·플레이어 이름 위 렌더링을 클라이언트/서버에서 테스트.
+- **[v0.2] 칭호 조건 시스템:** 조건 유형(도감·직업·보스·강화·시즌·이벤트)을 JSON(AND/OR)으로 정의하고 핫리로드한다. `(player_uuid, title_id)` 유니크로 반복 달성에도 1회 지급, 새 칭호 추가 시 **소급 평가**(미리보기 후 실행), 칭호 세트(전체 보유 시 상위 칭호), 숨김 칭호, 장착 슬롯·변경 쿨타임을 지원한다.
+
+### 6.5 치장·소셜 [v0.2 제안] (`docs/cosmetics-social-spec.md`)
+
+- **원칙:** 전투 판정 불변, 뽑기 외에 직접 구매·업적 경로 하나 이상, 삭제 대신 비활성화, 랭킹 보상은 칭호·치장만(Coin 보상 금지).
+- **이름 꾸미기:** 서버가 정의한 스타일 ID(색·그라데이션·장식)만 선택 가능(임의 서식 코드 금지, 가독성 검사). 구매는 Coin 소각.
+- **프로필 카드:** 직업·도감률·보스 기록·대표 장비(스냅샷)·소개 문구, 공개 설정(공개/친구/비공개).
+- **서버 알림·명예의 전당:** 높은 강화 성공·보스 최초 클리어 공지(강화 파괴는 전체 공지하지 않음), 보스 최단 기록(파티 크기·난이도별 분리)과 직업 주간 랭킹, 의심 기록 무효 처리.
+- **검 외형·이펙트 치장:** 바닐라 백엔드는 우리 컴포넌트·커스텀 모델, LR 백엔드는 `DisplayId`. fx 스킨은 스탯·도감 키를 바꾸지 않는다.
 
 ## 7. 서버 경제와 재화 순환
 
@@ -246,7 +314,7 @@ GearBridge.onSkillUsed(event_id, skill_id, context) [선택]
 - 기본 화폐 `Coin`. 별도의 유료 화폐를 기본 설계에서 만들지 않는다.
 - **재화 생성:** 직업 수확물 NPC 판매, 일회성 업적/퀘스트 보상, 관리자가 공시한 이벤트 보상.
 - **재화 이동:** 유저 간 거래·의뢰 보수·경매; 이는 **재화 소모가 아님**.
-- **재화 소멸(싱크):** 강화 비용·인챈트 비용·상점 구매비·거래 수수료·토지 구입/확장/유지·가구 뽑기/직접 구매·워프 비용·일부 편의 서비스·공식 경매 수수료.
+- **재화 소멸(싱크):** 강화 비용·인챈트 비용·상점 구매비·거래 수수료·토지 구입/확장/유지·가구 뽑기/직접 구매·워프 비용·일부 편의 서비스·공식 경매 수수료. **[v0.2 추가]** 직업 부대비용(씨앗·입장·연료·미끼)·요리 재료비(NPC 구매)·강화 보호권·이름 스타일/칭호 구매·직업·닉네임 변경 수수료·시작 무기 진화.
 - 모든 증감은 `ledger_entries`에 `출처/대상/금액/사유/참조 ID/시간` 기록. 계좌 잔액 음수 불가.
 
 ### 7.2 변동 시장경제 [확정 기획]
@@ -280,6 +348,23 @@ P_sell = clamp(P_base * (D / max(Q, Q_min)) ^ alpha, P_floor, P_cap)
 - 출석 보상(이전 안: **30분×4회, 총 2시간**)은 초기 유동성 조절을 위해 작은 비율로 설계. 지급 상한·일일 리셋·AFK 악용 방지.
 - 사망 패널티(이전 안: **직업 XP 차감과 일정 시간 획득량 -50%**)는 개발 후 테스트 후보. 레이드 이탈·생활 직업 격차가 심해지면 완화하고, Coin 몰수와 중복 패널티는 지양.
 - 방어구 강화·활 강화·오오라·장식용 외형은 확장 범위로 유지.
+
+### 7.5 시뮬레이션 기준값 [v0.2] (`docs/G3-economy-simulation-sheet.md`, `data/g3/G3-economy-simulation.xlsx`)
+
+경제·밸런스 수치는 G3 워크북(수식 약 9천 개, 시나리오 7종, 난수 시뮬레이션)으로 점검한다. **Dashboard 판정 18개를 출시 전 점검표**로 쓴다.
+
+| 지표 | 기준(제안) |
+|---|---|
+| 직업 간 시간당 순수익 비율 | 0.8~1.25배 |
+| 요리 마진 | 원재료비 초과 |
+| 가격 하한 고착 일수 | 90일 중 10일 이하 |
+| 목표 강화 도달 일수 | 설계 목표 ±30% |
+| 가구 뽑기 | 균등 확률 합 100%, 지정 가구 P90 비용 ≤ 월소득의 50% |
+| 90일차 순증감 / 1인당 보유 ÷ 일 발행 | 0 이상 / 30배 이하 |
+| 아키타입 DPS 비율 / 효과 DPS 비중 | 1 ±5% / 15% 이하 |
+
+- 기본 입력값은 기본 시나리오가 기준을 통과하도록 조정한 **임시값**이며 실측으로 교체해야 한다. 소각 경로(직업 부대비용·요리 재료비·상점 구매)를 빠뜨리면 통화량이 폭주한다.
+- 시나리오 결과: 한 직업 쏠림(70%)·인구 2배에서 직업 간 비율과 요리 마진이 기준을 벗어나므로 매입 수요(D)와 소각 항목을 인구에 맞춰 조정해야 한다.
 
 ## 8. 유저 게시판·거래·의뢰
 
@@ -383,6 +468,8 @@ P_sell = clamp(P_base * (D / max(Q, Q_min)) ^ alpha, P_floor, P_cap)
 
 ## 10. 총기 (LR + TaCZ) [확정 기획]
 
+> **[v0.2]** TaCZ와 LR 모두 **공식 1.21.1 NeoForge 빌드**가 있어 비공식 포트·직접 포팅이 필요 없다(TaCZ 1.x LTS 1.2.0, LR `1.21.1` 브랜치). 코드는 GPL-3.0, 에셋은 TaCZ CC BY-NC-ND 4.0·LR ARR이므로 **에셋은 무수정 사용**하고 수정이 필요한 모델·모션은 자체 제작 에셋으로 대체한다(2.2장). 이 서버의 **검은 TaCZ/LR 근접 체계를 쓰지 않는다**(6.1장).
+
 ### 10.1 판매 구성
 
 | 분류 | 기본 구성 | 역할 | 밸런스 목표 [제안] |
@@ -405,7 +492,7 @@ P_sell = clamp(P_base * (D / max(Q, Q_min)) ^ alpha, P_floor, P_cap)
 4. **경제적 보정:** 총알 종류별 가격·1세트 발수·발사당 비용을 설정해 운용비 발생.
 5. **우선 지표:** 동일 장비 성장 단계에서 `총기 DPS/검 DPS`, `보스 클리어 시간`, `탄약 Coin 소모/분`, `유효 사거리`, `생존성` 비교.
 
-**주의:** 단순히 총알 가격만 올리는 것은 높은 순간 폭딜 문제를 해결하지 못한다. **보스 피해 상한 + 발사 수치 + 비용**을 같이 조절한다. 비공식 LR/TaCZ 버전 간 충돌·의존성·건팩 업그레이드 오류는 **개발 초기 최우선 테스트 리스크**다.
+**주의:** 단순히 총알 가격만 올리는 것은 높은 순간 폭딜 문제를 해결하지 못한다. **보스 피해 상한 + 발사 수치 + 비용**을 같이 조절한다. TaCZ 1.2.0(LTS)과 LR 1.21.1 브랜치의 버전 매칭·의존성(simplebedrockmodel·player-animation-lib·cloth-config 등)·건팩 업그레이드 오류는 **개발 초기 최우선 테스트 리스크**다. TaCZ 2.x 시리즈(개발 중)로의 전환 시 호환성 변화 가능성을 위험 등록부에 기록한다.
 
 ## 11. 보스와 상위 강화 재료 [확정 기획]
 
@@ -416,6 +503,7 @@ P_sell = clamp(P_base * (D / max(Q, Q_min)) ^ alpha, P_floor, P_cap)
 - Cataclysm은 후보지만, 모드 자체 전리품의 과도한 무기/방어구가 기존 강화 루프를 우회하면 **드롭 제거 또는 전용 재료로 변환**해야 한다.
 - 참여/기여 보상은 서버 권위로 계산, 소환 취소·고의 자살·보스 끌고 나오기·접속 종료 악용 방어.
 - 협동을 장려하되 **레이드 이외 콘텐츠는 강제 파티 금지**. 솔로 가능한 단계도 설계.
+- **[v0.2]** 보스 기여도·랭킹·도감·칭호 보상은 **서버가 검증한 타격(`ValidatedMeleeHit`)만** 입력으로 쓴다(미검증 타격으로 보상 발생 금지). 보스 효과 감쇠(`boss_scale`)와 제어 효과 제한을 적용한다.
 
 ## 12. 범죄·수배·감사 로그 [확정 기획]
 
@@ -471,9 +559,20 @@ P_sell = clamp(P_base * (D / max(Q, Q_min)) ^ alpha, P_floor, P_cap)
 | `player_jobs` | `uuid, job_id, level, xp, active` | (uuid,job_id) unique, 활성 1개 |
 | `wallets` | `uuid PK, coin_balance, version` | 금액 음수 금지, 낙관적 락 |
 | `ledger_entries` | `id PK, event_id UNIQUE, debit_account, credit_account, amount, reason, created_at` | 상호 대사 가능, 중복 지급 금지 |
-| `gear_history` | `id, gear_serial, owner_uuid, old_state, new_state, event_id UNIQUE` | 강화 감사 |
+| `gear_defs` | `def_id, item_id, category, archetype, hands, tier, base_stats_json, bind_policy, active` | `(item_id, def_id)` 유니크 |
+| `gear_instances` | `serial PK, def_id, owner_uuid, enhance_level, evolution_id, display_id, status, version` | 낙관적 락, `status`: active/escrow/destroyed |
+| `gear_history` | `id, serial, request_id UNIQUE, old_state, new_state, rates_version, created_at` | 강화·진화 감사 |
+| `enhance_rates` | `tier, level, success, keep, destroy, coin_cost, stone_cost, rates_version` | 합 100% 검증 |
+| `evolution_tree` | `from_def, to_def, conditions_json, cost_json, carry_over_ratio` | 순환 방지 검사 |
+| `pending_gear_ops` | `request_id PK, serial, op, payload, status` | outbox, 재실행 안전 |
+| `starter_claims` | `uuid PK, def_id, serial, claimed_at, swap_used, request_id UNIQUE` | 계정당 1회 발급 |
+| `cook_jobs` / `player_cook_state` | `job_id, uuid, recipe_id, started_at, ready_at, status` / `uuid, cooldown_until` | 재료 1회 차감, 플레이어 쿨타임 |
 | `collections` | `uuid, collection_key, first_obtained_at` | 중복 업적 차단 |
-| `titles` / `player_titles` | `title_id, key, name, style, active, grant_reason` | 변경 기록 |
+| `titles` / `player_titles` | `title_id, key, name, style, active, grant_reason, source_event_id UNIQUE` | 변경 기록 |
+| `title_conditions` / `title_sets` | `title_id, expr_json, version` / `set_id, member_title_ids, reward_title_id` | 조건 핫리로드, 소급 평가 |
+| `name_styles` / `player_name_styles` / `player_equipped_style` | `style_id, kind, definition_json, price, unlock_type, active` / `uuid, style_id, source_event_id UNIQUE` / `uuid, style_id` | 서버 정의 스타일만 허용 |
+| `profile_settings` | `uuid, visibility, bio, showcase_serials_json, updated_at` | 공개 설정 서버 강제 |
+| `leaderboards` / `leaderboard_entries` / `announcements` | `board_id, type, scope, period, rules_json` / `board_id, period_key, uuid, score, party_size, invalidated` / `ann_id, type, template, trigger_json, cooldown_sec` | 보상 `reward_event_id UNIQUE`, 무효 처리 재계산 |
 | `market_listings` / `escrow` | `listing_id, seller_uuid, item_snapshot, balance_snapshot, status` | 소유·재고 일관성 |
 | `plots` / `plot_acl` | `plot_id, owner_uuid, bounds, access_level` | 공간 중복/권한 확인 |
 | `furniture_catalog` | `furniture_key, item_id, price, flags, source(직접구매/상시/테마/시즌), pool_id` | 등록 아이템만 지급 (등급 없음) |
@@ -489,6 +588,7 @@ P_sell = clamp(P_base * (D / max(Q, Q_min)) ^ alpha, P_floor, P_cap)
 
 - 모든 아이템 종류는 **`namespace:path` ResourceLocation**으로 식별. 사용자에게 표시되는 한글명은 키가 아니다.
 - 유니크 장비·가구는 `instance_uuid`를 부여. 외부 모드 NBT/데이터 컴포넌트와 충돌하지 않도록 래퍼 메타데이터 정책 문서화.
+- **[v0.2]** 장비의 종류 키는 `(item_id, def_id)`, 개별 키는 `serial`(UUID)이다. 우리 데이터 컴포넌트는 `economycore:` 네임스페이스(`identity`·`gear`)로 분리하고 타 모드의 `CUSTOM_DATA`와 섞지 않는다. 발급은 장부(`persistence`)에 먼저 기록한 뒤 지급한다.
 - 모든 원장 이벤트에 유일한 `event_id`와 `source_system`을 부여. 외부 모드 이벤트 재호출에서도 같은 보상 두 번 지급 금지.
 - 서버 메인 스레드의 월드 변경과 비동기 DB 저장 경계를 명확히 하고, 장애 시 재처리 큐 및 멱등성 보장.
 - 백업: 월드·DB·설정·모드팩 버전·건팩·가구 풀을 **같은 복구 시점**으로 저장. 최소 1회 복구 리허설 필수.
@@ -537,25 +637,31 @@ SET_WISH(player_uuid, pool_id, item, request_id):                 # 목표 변�
 
 ```text
 economycore/
-  platform/        # NeoForge 서버 이벤트/네트워크/명령/UI 등록
+  platform/        # NeoForge 서버 이벤트/네트워크/명령/UI 등록, locklist 검증
+  guard/           # recipe(레시피 필터)·craft(결과 검증)·durability·command·identity(시리얼·장부)
   player/          # 계정/닉네임/권한
   jobs/            # 농부/광부/요리사/어부
+  cooking/         # CookJob(조리 시간·쿨타임·품질), 모드 A/B 어댑터
   economy/         # 지갑/원장/시장가격/상점
-  gearbridge/      # 기존 검 강화 모드 이벤트 어댑터
+  gear/            # 장비 카탈로그·인스턴스·applyStats (GearBridge 구현)
+  gearbridge/      # 경제 서비스 ↔ 장비 계층 인터페이스(강화·진화·이벤트)
+  combat/          # 신규 근접 무기 서버 권위 범위 공격, ValidatedMeleeHit 발행
+  fx/              # 이펙트 디스패처·정의 로더·예산, 특수 효과 엔진
   enchant/         # 별도 인챈트 서비스
   collection/      # 도감·마일스톤
-  social/          # 칭호/게시판/의뢰
+  social/          # 칭호(조건 엔진)/게시판/의뢰
+  cosmetics/       # 이름 스타일·프로필 카드·알림·랭킹
   property/        # 경작지·주택·권한
   furniture/       # 모드 가구 카탈로그/설치 추적
-  gacha/           # 확률·천장·조각·지급
-  firearms/        # LR/TaCZ 제어 어댑터
+  gacha/           # 균등 풀·선택 천장·조각·지급
+  firearms/        # LR/TaCZ 제어 어댑터(TaCZ/LR 코드 비의존, 이벤트·데이터 수준)
   boss/            # 보스·보상
   crime/           # 사건·수배·감사
   admin/           # 관리자 GUI·설정·로그 조회
   persistence/     # DB·백업·이벤트 멱등성
 ```
 
-모듈 간 **공용 이벤트**: `JobItemProduced`, `CommoditySold`, `CurrencyTransferred`, `GearEnhanced`, `GearDestroyed`, `CollectionUnlocked`, `ContractCompleted`, `PlotPurchased`, `FurniturePlaced`, `FurnitureRecovered`, `FurnitureRollResolved`, `GunFired`, `BossDefeated`, `CrimeIncidentRecorded`.
+모듈 간 **공용 이벤트**: `JobItemProduced`, `CommoditySold`, `CurrencyTransferred`, `GearEnhanced`, `GearDestroyed`, `CollectionUnlocked`, `ContractCompleted`, `PlotPurchased`, `FurniturePlaced`, `FurnitureRecovered`, `FurnitureRollResolved`, `GunFired`, `BossDefeated`, `CrimeIncidentRecorded`. **[v0.2 추가]** `GearEnhanceFailed`, `GearEvolved`, `GearActionEvent`(휘두르기·타격·치명타·처치), `ValidatedMeleeHit`, `StarterWeaponClaimed`, `CookJobStateChanged`, `TitleGranted`, `LeaderboardEntryRecorded`.
 
 **개발 안전선:** NeoForge 이벤트 API/메뉴 스크린/패킷/데이터 컴포넌트의 **정확한 클래스명**은 사용 중인 NeoForge 패치 버전에 맞춰 공식 문서와 실제 코드로 확인. 이 문서는 구현 인터페이스 요구이지 컴파일 가능한 Java API 선언이 아니다.
 
@@ -630,21 +736,78 @@ firearms:
 boss:
   job_restriction: false
   reward_duplicate_protection: true
+
+# --- v0.2 추가 (모든 수치 [제안]) ---
+guard:
+  recipe_whitelist_mode: "deny_by_default"
+  command_policy: "block_item_creation_for_non_admin"
+  lockcheck: "warn"                    # off | warn | refuse
+
+cooking:
+  cook_time_source: "recipe"          # 조리 시간은 레시피별
+  cooldown_scope: "player"            # 플레이어 단위 쿨타임
+  cooldown_starts_at: "start"         # start | ready
+  quality_mode: "deterministic_b"     # 직업 레벨·도구 티어 기반, 무작위 없음
+  control_mode: "auto"                # core(모드 B) | native(모드 A) | auto(G1 결과)
+
+combat:
+  enabled: true
+  block_break: false
+  require_los: true
+  range_tolerance: 0.3
+  angle_tolerance_deg: 5
+  ignore_invulnerable_below_ticks: 10
+  apply_player_attributes: false
+  crit_mode: "vanilla_jump"
+  pvp: false
+  dual_offhand_policy: "reject"       # reject | auto_move
+  intent_rate_limit: 20
+
+fx:
+  enabled: true
+  quality: "normal"                   # off | low | normal | high
+  auto_degrade: true
+  budget: {per_effect_particles: 40, per_player_per_sec: 400, server_per_sec: 12000}
+
+starter_weapon:
+  offer_archetypes: [one_hand_sword, dagger, dual_blade, greatsword, spear, axe]
+  claims_per_account: 1
+  free_swap: {count: 1, window_hours: 24}
+  bind_on_acquire: true
+
+enhance:
+  protection_scroll: {enabled: false, from_level: 10, price: 1500}   # 채택 시 활성화
+  safe_below_level: 5                 # 완화 장치 채택 시 8
+  refund_on_destroy: 0.0              # 채택 시 0.3
+  carry_over_ratio: 0.5               # 진화 시 강화 단계 이월
 ```
 
 ## 17. 개발 단계와 우선순위
 
 | 단계 | 작업 | 산출물/완료 조건 |
 |---|---|---|
-| **P0 — 환경/위험 검증** | 1.21.1 NeoForge/Java 21 서버 기동, LR+TaCZ/FD/Aquaculture/가구 모드 충돌 테스트, 모드팩 버전 잠금 | 2클라이언트 접속·기본 전투/요리/낚시/가구 설치 정상 |
+| **P0 — 환경/위험 검증** | 1.21.1 NeoForge/Java 21 서버 기동, TaCZ+LR/요리 모드(G1 비교)/Aquaculture/가구 모드 충돌 테스트, 모드팩 버전 잠금 | 2클라이언트 접속·기본 전투/요리/낚시/가구 설치 정상 |
 | **P1 — 공용 코어** | UUID·닉네임·지갑·원장·상점·조합 제한·관리자 GUI 골격·DB 백업 | 재접속/크래시 시 돈·아이템 불일치 0 |
-| **P2 — 생활 4직업** | 직업 XP·농지/스프링클러/낫·광산/광물·요리 판정·낚시 판정 | 직업별 기본 루프 완주, 레벨 해금, 수익 측정 |
-| **P3 — 장비/전투 통합** | 기존 검 모드 연동·인챈트·도감·칭호·보스·총기 밸런스 | 강화·파괴·도감·드롭 일치, 총/검 DPS 검증 |
+| **P2 — 생활 4직업** | 직업 XP·농지/스프링클러/낫·광산/광물·요리(조리 시간·쿨타임·결정적 품질)·낚시 판정 | 직업별 기본 루프 완주, 레벨 해금, 수익 측정 |
+| **P3 — 장비/전투 통합** | 장비 계층(`gear`·`combat`·`fx`)·`GearBridge` 강화 트랜잭션·인챈트·도감·칭호·보스·총기 밸런스 | 강화·파괴·도감·드롭 일치, 총/검 DPS 검증 |
 | **P4 — 경제와 거래** | 변동 시세·의뢰·에스크로·수배 로그 | 동시 거래·취소·중복 클릭·권한 우회 방어 |
 | **P5 — 주택/가구/뽑기 (필수)** | 주택 구입·방문·가구 설치·상점·가구 뽑기·조각·전시 | Coin 소각 집계, 중복 지급 0, 복구 검증 |
 | **P6 — 운영 안정화** | 직업간 시간당 수익 비교, 총기/보스/시장 시뮬레이션, UI·접근성·부하·백업·가이드 | 테스트 시나리오 통과, 운영 밸런스표 승인 |
 
 **중요:** P5는 ‘나중에 있으면 좋은 추가 콘텐츠’가 아니라 **최종 출시 기능에 포함**한다. 개발 순서만 안정성을 위해 뒤에 둔다.
+
+### 17.0 v0.2 추가 단계 (코어·장비·치장)
+
+기획 단계(G0~G7)는 `docs/` 문서로 진행 중이다: G1 모드 검증 체크리스트(`G1-mod-verification-checklist.md`), G3 경제 시뮬레이션(완료), G5 와이어프레임(`g5-wireframes*.md`, 완료). **G6 운영 정책은 현재 범위에서 생략**한다.
+
+| 구간 | 단계 | 내용 | 선행 |
+|---|---|---|---|
+| 코어(`server-core-mod-spec.md`) | C0~C5 | 프로젝트 골격·설정 → `guard.recipe/craft` → `durability/command` → `guard.identity`·장부 → `cooking` → lockcheck·관리자 | P0 스파이크 |
+| 전투(`combat-spec.md`) | CB0~CB5 | 신규 아이템·의도 패킷 → 범위 판정·피해 → 콤보·`GearActionEvent` → `ValidatedMeleeHit` → 지연 보상·PvP 정책 → LR 이식 평가 | C0~C3 |
+| 이펙트(`fx-spec.md`) | FX0~FX5 | 디스패처·정의 로더 → 바닐라 어댑터 → 오라·강화 연출 → 클라이언트 모듈 → fx 스킨 → LR 이식 평가 | CB2 |
+| 특수 효과(`special-effects-spec.md`) | SE0~SE4 | 엔진·상태이상 → 연쇄·폭발·표식 → 테마 팩·해금 → 고유 효과 → G3 시뮬 | FX1 |
+| 장비 연동(`gearbridge-spec.md`) | GB0~GB4 | 식별·저장 스파이크 → 카탈로그·`applyStats` → 강화 트랜잭션 → 진화·도감 → 카탈로그→데이터 생성·치장 | C3, P1 |
+| 치장·소셜(`cosmetics-social-spec.md`) | S1~S5 | 칭호 조건 엔진 → 이름 스타일 → 프로필 → 서버 알림 → 랭킹 | 이벤트 버스·원장 |
 
 ### 17.1 최소 필수 검수 시나리오
 
@@ -654,7 +817,7 @@ boss:
 - [ ] 직업 도구는 무한 내구도, 낫은 허가받은 성숙 작물만 범위 수확.
 - [ ] 스프링클러는 정확히 5×5, 물뿌리개 충전, 물 소모, 청크 언로드 시 정지.
 - [ ] 광석 블록 설치/회수로 강화석 드롭을 복제할 수 없음.
-- [ ] 요리·낚시 타이밍 판정이 고지된 입력 지연 허용 범위에서 정상.
+- [ ] 낚시 타이밍 판정이 고지된 입력 지연 허용 범위에서 정상. 요리는 조리 시간·플레이어 쿨타임·결정적 품질이 정확하고 재료가 1회만 차감되며 재접속·크래시 후 작업이 복원됨.
 - [ ] 어부/농부/광부/요리사 각각 1시간 활동 시 표본 수익과 과잉생산 가격 방어가 측정됨.
 - [ ] 유저 간 계약에 거래 취소/상대 접속 종료/인벤토리 꽉 참이 끼어도 에스크로 보전.
 - [ ] 집 소유자만 파괴·가구 수거 가능하고 방문자는 보존됨.
@@ -664,6 +827,11 @@ boss:
 - [ ] 범죄 기록에 실제 행위자 UUID·시간·좌표·점유·권한 근거가 남음.
 - [ ] 관리자 칭호 생성/부여/회수·운영 로그 및 관리자의 권한 검증 정상.
 - [ ] 전체 월드+DB 복구 시 가구·주택·돈·거래소·도감의 데이터 정합성이 유지됨.
+- [ ] **[v0.2]** 근접 공격: 클라이언트가 대상·위치를 보낼 수 없고(의도 패킷만), 서버가 대상·쿨다운·피해를 계산하며 벽 뒤·범위 밖 공격이 불가. 의도 패킷 남발이 레이트 제한에 걸림.
+- [ ] **[v0.2]** 시작 무기는 계정당 1회 발급, 중복 클릭·재접속·인벤토리 가득에도 1회 발급 ↔ 1개 지급, 무료 교체는 24시간 1회.
+- [ ] **[v0.2]** 강화 `reserve→resolve→apply`와 outbox가 서버 강제 종료 후에도 결과를 정확히 1회 반영하고, 파괴 시 스택이 1회만 제거됨. 쌍검 오프핸드 점유가 우회되지 않음.
+- [ ] **[v0.2]** 특수 효과가 서버 RNG·내부 쿨다운으로만 발동하고 효과 연쇄가 없으며 기대 DPS가 상한(15%) 이내. 이름 스타일에 임의 서식 코드가 주입되지 않음.
+- [ ] **[v0.2]** 모드팩 라이선스 점검(GPL 소스 제공, ND·ARR 에셋 무수정)과 G3 Dashboard 판정 통과(임시 입력값 → 실측값 교체 후).
 
 ## 18. 운영 밸런스 측정과 조정 원칙
 
@@ -672,12 +840,13 @@ boss:
 - **재화 수익 비교:** 직업을 바꾸지 않으면 도감과 보스가 막히는 구조 금지. 네 직업 중 최고 효율 하나가 시장 전체를 지배하지 않도록 NPC 매입량·시장 수요를 주기적으로 조절.
 - **가구 뽑기:** 인게임의 장식 욕구를 Coin 소각으로 연결하되 강제 과금형 구조나 사행성 경쟁을 만들지 않는다. 기본 가구는 반드시 직접 구매 가능.
 - **모드 업데이트:** 런처/클라이언트 자동 업데이트 계획은 이전 아이디어를 승계하되, **서버-클라이언트 버전 불일치 탐지 및 이전 버전 롤백**부터 구현.
+- **[v0.2]** 경제·밸런스 점검은 G3 워크북(7.5장)의 Dashboard와 난수 시뮬레이션을 사용하고, 실측(P2 이후)으로 입력을 교체해 재계산한다.
 
 ## 19. 현재 미확정·개발자 협의 항목
 
-1. 자체 검 강화 모드의 **NeoForge 1.21.1 API 연동 형식**, 시리얼 ID, 이벤트 훅, 아이템 데이터 컴포넌트.
+1. *(v0.2 해소)* 자체 검 강화 모드는 폐기하고 `GearBridge`·장비 계층으로 대체. **남은 확인:** `economycore:` 컴포넌트의 직렬화·동기화 공존, 바닐라 백엔드 → LR 이식 평가(FX5), 서버 측 공격 의도 수집 API 확인.
 2. 정식 채택할 가구 모드 조합(Another Furniture / Handcrafted / Refurbished)과 라이선스/서버 성능.
-3. 총 4정의 **정확한 TaCZ 총기·탄약 ID**, LR/TaCZ 빌드 매칭, 건팩 업그레이드 여부.
+3. 총 4정의 **정확한 TaCZ 총기·탄약 ID**, TaCZ 1.2.0(LTS)↔LR `1.21.1` 브랜치 매칭, 건팩 업그레이드 여부, TaCZ 2.x 전환 대응.
 4. 광산의 `자체 광석` 도입 범위 vs 검증된 1.21.1 NeoForge 추가 광물 모드 도입.
 5. 공용 경작지의 점유 방식·절도 허용 범위·수배 조건·제재 수위.
 6. 직업 변경 쿨타임/소모 Coin, 직업별 최대 레벨과 EXP 곡선.
@@ -685,8 +854,18 @@ boss:
 8. 플레이어 간 장비·가구의 거래 가능 범위와 귀속 설정.
 9. 주택 구획 종류·구매 또는 임대 우선 정책, 유지비/만료 복구 규칙.
 10. 가구 풀 목록·풀 크기 N·1회 가격·선택 천장 K(기본 1.5N)·조각 교환 비용 X(기본 0.5N)·시즌 풀 복각 정책(실제 모드 ID 확인 후 확정). *(v0.2: 등급 없음 확정, 균등 풀 구조 반영)*
-11. PvP 허용 여부 및 총기/보스 피격 이벤트에서 서버 수정이 가능한 범위.
+11. PvP 허용 여부(**v0.2 제안: 기본 끔, 지정 구역에서만**) 및 총기/보스 피격 이벤트에서 서버 수정이 가능한 범위.
 12. 최대 동시접속자 목표, 월드 구조, 데이터베이스 선택, 서버 운영 인력, 로그 보존 기한.
+13. **[v0.2]** 요리 모드 조합(FD / Kaleidoscope Cookery / 병행, Compat 1.21.1 빌드 존재 여부)과 조리 제어 방식(모드 A/B).
+14. **[v0.2]** 조리 쿨타임 길이·시작 시점, 품질 등급 수·배수, 동시 조리 큐 길이.
+15. **[v0.2]** 시작 무기 후보 6종 확정, 목제→철/청동 진화 비용, 무료 교체 시간.
+16. **[v0.2]** 무기 카탈로그 선별(아키타입·테마 우선순위), 모델·효과 세트 제작 순서, 단검 후방 공격 도입 여부.
+17. **[v0.2]** 특수 효과 해금 단계·DPS 예산, 확률형 vs 결정적 발동, 유틸·회복 효과의 가치 환산.
+18. **[v0.2]** 강화 파괴 완화 장치 채택(보호권·안전 구간·환급)과 보호권 가격(단계별 차등 여부).
+19. **[v0.2]** 가구 풀 시즌 종료 후 조각·목표 처리, 조각 획득 경로 확대(이벤트·구매), 직접 구매 가구와 풀 가구의 가격 관계.
+20. **[v0.2]** 이름 스타일 범위·가격, 프로필 공개 세분화, 랭킹 지표·노출 옵트아웃, 시즌 복각 정책.
+21. **[v0.2]** UI 구현 방식(서버 메뉴 vs 커스텀 화면+패킷), 3D 프리뷰, 직업별 월드 내 HUD.
+22. **[v0.2]** 라이선스 전문 확인(Another Furniture·Handcrafted 커스텀, Refurbished/Framework, FTB 모드팩 정책, Aquaculture 2 전문)과 TaCZ·LR 저작자 허락 문의.
 
 ---
 
@@ -695,20 +874,22 @@ boss:
 개발자는 최초 착수 전 아래 **계획서/검증 결과**를 제출한다.
 
 1. **모드팩 locklist:** 각 모드의 정확한 파일명·버전·다운로드 출처·의존성·라이선스·실기동 결과.
-2. **기능별 구현/재사용 구분표:** 서드파티에서 제공/별도 모드 구현/기존 검 모드 연동/구현 불가·대체안.
+2. **기능별 구현/재사용 구분표:** 서드파티에서 제공/별도 모드 구현/장비 계층(자체 구현)/구현 불가·대체안.
 3. **데이터 명세:** UUID·아이템 고유 ID·수량·Coin·도감·가구 instance·플롯·범죄·원장 스키마.
 4. **주요 UI 와이어프레임:** 메뉴·상점·직업·게시판·주택·가구 뽑기·칭호·관리자.
 5. **설정 파일:** 확률·가격·보스 보상·직업 XP·시장 가격식·권한·로그 보존을 서버 재시작 또는 핫리로드로 조정 가능.
 6. **테스트 보고서:** 기능 테스트, 모드 충돌, 경제 시뮬레이션, TPS/메모리 부하, 장애 복구/데이터 무결성.
 7. **운영·배포 매뉴얼:** 모드팩 배포/업데이트/롤백/월드 백업/DB 복구 및 인게임 관리자 명령.
+8. **[v0.2] 기획 문서 세트:** `docs/` — `server-core-mod-spec`·`combat-spec`·`gearbridge-spec`·`fx-spec`·`special-effects-spec`·`weapon-archetypes-spec`·`weapon-catalog`(+`data/weapon_catalog`)·`starter-weapon-spec`·`cosmetics-social-spec`·`asset-requirements`·`g5-wireframes(-2)`·`G1-mod-verification-checklist`·`G3-economy-simulation-sheet`(+`data/g3` 워크북)·`mod-license-survey`·`melee-system-findings`·`motion-authoring-guide`.
 
 ## 21. 공개 모드/기술 참고 링크
 
 - [Farmer's Delight — CurseForge](https://www.curseforge.com/minecraft/mc-mods/farmers-delight)
 - [Aquaculture 2 — 1.21.1 파일 목록](https://www.curseforge.com/minecraft/mc-mods/aquaculture/files/all?version=1.21.1)
-- [TaCZ 1.21.1 NeoForge 비공식 포트 — Modrinth](https://modrinth.com/mod/tacz-1.21.1)
-- [TaCZ 포트 소스/주의사항 — GitHub](https://github.com/MUKSC/TACZ-1.21.1)
-- [LR Tactical 1.21.1 NeoForge 비공식 포트 — Modrinth](https://modrinth.com/mod/lr-tactical-1.21.1)
+- [TaCZ 공식 — GitHub(1.21.1 브랜치)](https://github.com/MCModderAnchor/TACZ)
+- [LR Tactical 공식 — GitHub(1.21.1 브랜치)](https://github.com/LesRaisins-Studios/LesRaisins-Tactical-Equipements)
+- (참고) [TaCZ 1.21.1 비공식 포트 — Modrinth](https://modrinth.com/mod/tacz-1.21.1) · [LR Tactical 비공식 포트 — Modrinth](https://modrinth.com/mod/lr-tactical-1.21.1) — 출시 구성에는 포함하지 않는다
+- [Kaleidoscope Cookery — Modrinth](https://modrinth.com/mod/kaleidoscope-cookery) · [Kaledelights Compat — CurseForge](https://www.curseforge.com/minecraft/mc-mods/kaledelights-compat)
 - [Another Furniture — CurseForge](https://www.curseforge.com/minecraft/mc-mods/another-furniture)
 - [Handcrafted — CurseForge](https://www.curseforge.com/minecraft/mc-mods/handcrafted)
 - [MrCrayfish's Furniture: Refurbished — 1.21.1 파일 목록](https://www.curseforge.com/minecraft/mc-mods/refurbished-furniture/files/all?version=1.21.1)
@@ -717,4 +898,4 @@ boss:
 - [FTB Chunks NeoForge — CurseForge](https://www.curseforge.com/minecraft/mc-mods/ftb-chunks-forge)
 - [L_Ender's Cataclysm — Modrinth](https://modrinth.com/mod/l_enders-cataclysm)
 
-**최종 범위 요약:** `NeoForge 1.21.1 / 자체 검 강화 모드와 연동 / 농부·광부·요리사·어부 / Farmer's Delight·Aquaculture 2·LR+TaCZ / 강화·인챈트·도감·칭호 / 시장경제·상점·거래·의뢰·범죄 로그 / 보스 / 주택·가구 모드·가구 뽑기·장식 / 관리자 UI·경제 원장·복구`. 가구와 뽑기는 **확정 개발 범위**이고, 수치·세부 구현만 조정 대상이다.
+**최종 범위 요약:** `NeoForge 1.21.1 / 자체 장비 계층(신규 아이템·서버 권위 범위 공격·이펙트)과 GearBridge / 농부·광부·요리사·어부 / 요리 모드(G1 비교)·Aquaculture 2·TaCZ(+LR 확장) / 강화·인챈트·도감·칭호 / 시장경제·상점·거래·의뢰·범죄 로그 / 보스 / 주택·가구 모드·가구 뽑기·장식 / 관리자 UI·경제 원장·복구`. 가구와 뽑기(등급 없는 균등 풀)는 **확정 개발 범위**이고, 수치·세부 구현만 조정 대상이다.
